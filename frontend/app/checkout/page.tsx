@@ -1,0 +1,353 @@
+
+
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import Navbar from "@/components/Navbar";
+import { useCart } from "@/app/context/CartContext";
+import Script from "next/script";
+
+export default function CheckoutPage() {
+  const { cart } = useCart();
+  const router = useRouter();
+
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [cartWeight, setCartWeight] = useState(0);
+  const [loadingShipping, setLoadingShipping] = useState(false);
+
+  const [isPaying, setIsPaying] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
+  });
+
+  const checkAuth = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/check", { credentials: "include" });
+      return res.status === 200;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  // 🎯 FIX 1: Initial load par Cart Page se saved Delivery Charge aur Pincode auto-load karein
+  useEffect(() => {
+    const summary = JSON.parse(localStorage.getItem("cartSummary") || "{}");
+    if (summary.totalWeightInKg) {
+      setCartWeight(summary.totalWeightInKg);
+      setCouponDiscount(summary.couponDiscount || 0);
+    }
+    
+    // Agar cart summary mein pehle se delivery charge aur pincode hai, toh use set kar dein
+    if (summary.shippingCharge !== undefined) {
+      setDeliveryCharge(Number(summary.shippingCharge));
+    }
+    if (summary.pincode) {
+      setFormData((prev) => ({ ...prev, pincode: summary.pincode }));
+    }
+  }, []);
+
+  // 💡 LIVE AUTOMATIC PINCODE CALCULATOR EFFECT
+  // Jab user input box mein pincode ko manually 6-digit ka karega tabhi naya rate fetch hoga
+  useEffect(() => {
+    // Pura summary read karke check karein ki kya yeh wahi pincode hai jo cart se aaya tha
+    const summary = JSON.parse(localStorage.getItem("cartSummary") || "{}");
+    
+    // Agar typed pincode wahi hai jo cart page wala hai, toh dobara API call block karein (performance fix)
+    if (formData.pincode === summary.pincode && summary.shippingCharge !== undefined) {
+      setDeliveryCharge(Number(summary.shippingCharge));
+      return;
+    }
+
+    if (formData.pincode.length === 6 && cartWeight > 0) {
+      const fetchLiveShipping = async () => {
+        setLoadingShipping(true);
+        try {
+          const res = await fetch("http://localhost:5000/api/shipping/rates", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pincode: formData.pincode, 
+              weight: cartWeight,      
+            }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            setDeliveryCharge(data.courier.charge);
+          } else {
+            alert("Delivery not available for this pincode!");
+            setDeliveryCharge(0);
+          }
+        } catch (err) {
+          console.log("Shipping error:", err);
+        } finally {
+          setLoadingShipping(false);
+        }
+      };
+
+      fetchLiveShipping();
+    } else if (formData.pincode.length < 6) {
+      setDeliveryCharge(0); // Agar user backspace kare toh rate reset ho jaye
+    }
+  }, [formData.pincode, cartWeight]);
+
+  const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  const finalTotal = totalPrice - couponDiscount + deliveryCharge;
+
+  // const handleOrder = async () => {
+  //   const isAuth = await checkAuth();
+  //   if (!isAuth) {
+  //     alert("Please login first");
+  //     router.push("/login");
+  //     return;
+  //   }
+
+  //   if (!formData.name || !formData.phone || !formData.address || formData.pincode.length !== 6) {
+  //     alert("Please fill in all complete shipping details.");
+  //     return;
+  //   }
+
+  //   const productsData = cart.map((item, index) => ({
+  //     productId: `${item.id}-${item.size}-${index}`,
+  //     title: item.title,
+  //     price: item.price,
+  //     image: item.image,
+  //     quantity: item.quantity,
+  //     size: item.size,
+  //   }));
+
+  //   try {
+  //     const response = await fetch("http://localhost:5000/api/orders", {
+  //       method: "POST",
+  //       credentials: "include",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         name: formData.name,
+  //         email: formData.email,
+  //         phone: formData.phone,
+  //         shippingCharge: deliveryCharge,
+  //         shippingAddress: {
+  //           address: formData.address,
+  //           city: formData.city,
+  //           state: formData.state,
+  //           pincode: formData.pincode,
+  //         },
+  //         totalPrice: finalTotal,
+  //         products: productsData,
+  //       }),
+  //     });
+
+  //     const data = await response.json();
+  //     alert("✅ Order Placed Successfully");
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
+
+
+  const handleOrder = async () => {
+    const isAuth = await checkAuth();
+    if (!isAuth) {
+      alert("Please login first");
+      router.push("/login");
+      return;
+    }
+
+    if (!formData.name || !formData.phone || !formData.address || formData.pincode.length !== 6) {
+      alert("Please fill in all complete shipping details.");
+      return;
+    }
+
+    setIsPaying(true); // Payment process start
+
+    const productsData = cart.map((item, index) => ({
+      productId: `${item.id}-${item.size}-${index}`,
+      title: item.title,
+      price: item.price,
+      image: item.image,
+      quantity: item.quantity,
+      size: item.size,
+    }));
+
+    try {
+      // 💳 Step A: Backend se Razorpay Order ID generate karwana
+      const checkoutRes = await fetch("http://localhost:5000/api/payment/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: finalTotal }),
+      });
+
+      const checkoutData = await checkoutRes.json();
+      if (!checkoutData.success) {
+        alert("❌ Razorpay order generation failed!");
+        setIsPaying(false);
+        return;
+      }
+
+      // 💳 Step B: Razorpay ka configuration setup
+      const options = {
+        key: "rzp_test_T78UJUOjZNbRW9", // 👈 Apni rzp_test_... key lagayein
+        amount: checkoutData.amount,
+        currency: "INR",
+        name: "XBIHAR",
+        description: "Streetwear Premium Drop",
+        order_id: checkoutData.orderId,
+        handler: async function (response: any) {
+          // 🎯 Yeh function tabhi chalega jab customer real payment pass kar dega
+          try {
+            const orderResponse = await fetch("http://localhost:5000/api/orders", {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                shippingCharge: deliveryCharge,
+                shippingAddress: {
+                  address: formData.address,
+                  city: formData.city,
+                  state: formData.state,
+                  pincode: formData.pincode,
+                },
+                totalPrice: finalTotal,
+                products: productsData,
+                razorpayPaymentId: response.razorpay_payment_id, // 👈 Payment Proof pass kiya
+              }),
+            });
+
+            const orderData = await orderResponse.json();
+            if (orderData.success) {
+              alert("🎉 Payment Successful & Order Placed!");
+              localStorage.removeItem("cartSummary");
+              router.push("/orders/success"); // Agar success page banaya hai toh wahan bhej do
+            } else {
+              alert("❌ Payment done but order logging failed: " + orderData.error);
+            }
+          } catch (err) {
+            console.error(err);
+            alert("❌ Network issue while saving order details.");
+          } finally {
+            setIsPaying(false);
+          }
+        },
+        prefill: {
+          name: formData.name,
+          email: formData.email || "customer@xbihar.com",
+          contact: formData.phone,
+        },
+        theme: { color: "#000000" }, // Black theme for streetwear vibe
+        modal: {
+          ondismiss: function () {
+            setIsPaying(false); // User ne popup manually kaat diya
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+
+    } catch (error) {
+      console.log(error);
+      alert("❌ Could not connect to payment gateway.");
+      setIsPaying(false);
+    }
+  };
+
+
+
+
+
+
+  return (
+    <main className="bg-black text-white min-h-screen">
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <Navbar />
+      <div className="max-w-7xl mx-auto px-6 pt-28 pb-20">
+        <h1 className="text-4xl font-orbitron mb-12">CHECKOUT</h1>
+        <div className="grid md:grid-cols-2 gap-12">
+          {/* LEFT FORM */}
+          <div className="space-y-6">
+            <input placeholder="Full Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
+            <input placeholder="Phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
+            <input placeholder="Email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
+            <textarea placeholder="Address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full bg-zinc-900 p-4 rounded-xl outline-none h-28" />
+            <input placeholder="City" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
+            <input placeholder="State" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
+            
+            {/* THE PINCODE INPUT FIELD */}
+            <div className="relative">
+              <input 
+                placeholder="Pincode (6-digit)" 
+                maxLength={6}
+                value={formData.pincode} 
+                onChange={(e) => setFormData({ ...formData, pincode: e.target.value.replace(/\D/g, "") })} 
+                className="w-full bg-zinc-900 p-4 rounded-xl outline-none border border-transparent focus:border-zinc-700 font-['Inter']" 
+              />
+              {loadingShipping && <span className="absolute right-4 top-4 text-xs text-zinc-500 animate-pulse">Calculating rate...</span>}
+            </div>
+          </div>
+
+          {/* RIGHT ORDER SUMMARY */}
+          <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800 h-fit">
+            <h2 className="text-2xl font-orbitron mb-6">ORDER SUMMARY</h2>
+            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+              {cart.map((item, index) => (
+                <div key={item.id + "-" + index} className="flex justify-between text-zinc-300">
+                  <p>{item.title} x {item.quantity}</p>
+                  <p>₹{item.price * item.quantity}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 border-t border-zinc-800 pt-4 space-y-3 text-zinc-400">
+              <div className="flex justify-between">
+                <p>Subtotal</p>
+                <p>₹{totalPrice}</p>
+              </div>
+              {couponDiscount > 0 && (
+                <div className="flex justify-between text-red-400">
+                  <p>Coupon Discount</p>
+                  <p>-₹{couponDiscount}</p>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <p>Delivery Charges</p>
+                {/* 🎯 FIX 2: Ab cart page ka calculated dynamic rate bina delee ke turant yahan load ho jayega */}
+                <p className="text-green-400 font-bold">{deliveryCharge > 0 ? `₹${deliveryCharge}` : "Enter pincode"}</p>
+              </div>
+              <hr className="border-zinc-800 my-2" />
+              <div className="flex justify-between font-orbitron text-white text-xl font-bold">
+                <p>Total</p>
+                <p>₹{finalTotal}</p>
+              </div>
+            </div>
+
+            {/* <button onClick={handleOrder} className="w-full mt-6 bg-white text-black py-4 rounded-xl font-orbitron font-bold hover:bg-gray-200">
+              PAY NOW
+            </button> */}
+
+            {/* 🌟 Button ko badal kar aisa kar dijiye */}
+<button 
+  disabled={isPaying || loadingShipping || finalTotal <= 0} 
+  onClick={handleOrder} 
+  className="w-full mt-6 bg-white text-black py-4 rounded-xl font-orbitron font-bold hover:bg-gray-200 disabled:bg-zinc-700 disabled:text-zinc-400 transition-all"
+>
+  {isPaying ? "SECURELY OPENING GATEWAY..." : "PAY NOW"}
+</button>
+
+
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
