@@ -22,6 +22,12 @@ const orderSchema = new mongoose.Schema(
     },
  
 
+    cfOrderId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
 products: [{
       product: {
               type: mongoose.Schema.Types.ObjectId,

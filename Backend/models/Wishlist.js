@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 
 const wishlistSchema = new mongoose.Schema(
   {
-    productId: Number,
+    productId: String,
     title: String,
     price: Number,
     image: String,
