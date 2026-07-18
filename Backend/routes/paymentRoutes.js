@@ -42,7 +42,7 @@ const { Cashfree } = require("cashfree-pg");
 // 🌟 YAHA PAR AAPKO APNI ORIGINAL KEYS REPLACE KARNI HAIN
 Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID || "1335008e340ed36ab9d364520a88005331"; 
 Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY; // 👈 Code se key poori tarah saaf!
-Cashfree.XEnvironment = "PRODUCTION";git add .
+Cashfree.XEnvironment = "PRODUCTION";
 // 💳 Checkout Route (Cashfree Version)
 router.post("/checkout", async (req, res) => {
   try {

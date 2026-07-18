@@ -23,16 +23,33 @@ const generateToken = (id) => {
 // };
 
 
+// const transporter = nodemailer.createTransport({
+//   host: process.env.EMAIL_HOST || "smtp.gmail.com",
+//   port: parseInt(process.env.EMAIL_PORT) || 465,
+//   secure: process.env.EMAIL_SECURE === "true" || true, // Agar string format me ho toh bypass karega
+//   auth: {
+//     user: process.env.EMAIL_USER, 
+//     pass: process.env.EMAIL_PASS, 
+//   },
+//   tls: {
+//     rejectUnauthorized: false // 🚨 Render server SSL verification block ko todo
+//   }
+// });
+
+
+
+
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.EMAIL_PORT) || 465,
-  secure: process.env.EMAIL_SECURE === "true" || true, // Agar string format me ho toh bypass karega
+  // 🚨 Gmail ka direct IPv4 SMTP server name use karein
+  host: "gmail-smtp-in.l.google.com", 
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER, 
     pass: process.env.EMAIL_PASS, 
   },
   tls: {
-    rejectUnauthorized: false // 🚨 Render server SSL verification block ko todo
+    rejectUnauthorized: false 
   }
 });
 
