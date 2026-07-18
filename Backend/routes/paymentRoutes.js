@@ -1,32 +1,88 @@
+// const express = require("express");
+// const router = express.Router();
+// const Razorpay = require("razorpay");
+
+// // 🎯 Apni Test Keys yahan daalenge (Baad me .env me daal sakte hain)
+// const razorpay = new Razorpay({
+//   key_id: "rzp_test_T78UJUOjZNbRW9", 
+//   key_secret: "aggH0XqFLp4nI0k5BwIL23Aa",
+// });
+
+// // 💳 Checkout Route
+// router.post("/checkout", async (req, res) => {
+//   try {
+//     const options = {
+//       amount: Number(req.body.amount) * 100, // ₹ to paise
+//       currency: "INR",
+//       receipt: "receipt_" + Math.floor(Math.random() * 10000),
+//     };
+
+//     const order = await razorpay.orders.create(options);
+    
+//     res.json({
+//       success: true,
+//       orderId: order.id,
+//       amount: order.amount
+//     });
+//   } catch (err) {
+//     console.error("Razorpay Error:", err);
+//     res.status(500).json({ success: false, error: err.message });
+//   }
+// });
+
+// module.exports = router;
+
+
+
 const express = require("express");
 const router = express.Router();
-const Razorpay = require("razorpay");
+const { Cashfree } = require("cashfree-pg");
 
-// 🎯 Apni Test Keys yahan daalenge (Baad me .env me daal sakte hain)
-const razorpay = new Razorpay({
-  key_id: "rzp_test_T78UJUOjZNbRW9", 
-  key_secret: "aggH0XqFLp4nI0k5BwIL23Aa",
-});
-
-// 💳 Checkout Route
+// 🔑 CASHFREE CONFIGURATION SETUP
+// 🌟 YAHA PAR AAPKO APNI ORIGINAL KEYS REPLACE KARNI HAIN
+Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID || "1335008e340ed36ab9d364520a88005331"; 
+Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY; // 👈 Code se key poori tarah saaf!
+Cashfree.XEnvironment = "PRODUCTION";git add .
+// 💳 Checkout Route (Cashfree Version)
 router.post("/checkout", async (req, res) => {
   try {
-    const options = {
-      amount: Number(req.body.amount) * 100, // ₹ to paise
-      currency: "INR",
-      receipt: "receipt_" + Math.floor(Math.random() * 10000),
+    const { amount, customerPhone, customerEmail } = req.body;
+    
+    // Ek unique aur dynamic order ID generate karna (Taaki duplicate order error na aaye)
+    const uniqueOrderId = "order_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+
+    const requestData = {
+      order_amount: Number(amount), // Cashfree direct ₹ leta hai, *100 karne ki zaroorat nahi hai!
+      order_currency: "INR",
+      order_id: uniqueOrderId,
+      customer_details: {
+        customer_id: customerPhone ? customerPhone.toString() : "cust_" + Date.now(),
+        customer_phone: customerPhone || "9999999999", // Fallback agar phone number na mile
+        customer_email: customerEmail || "customer@xbihar.com", // Fallback email
+      },
+      order_meta: {
+        // Payment success/fail hone ke baad user automatic is website URL par redirect ho jayega
+        return_url: "https://xbihar.com/orders/success?order_id={order_id}"
+      }
     };
 
-    const order = await razorpay.orders.create(options);
+    // 💳 Cashfree SDK v3 standard se order creation request bhejna
+    const response = await Cashfree.PGCreateOrder("2023-08-01", requestData);
     
+    // Frontend ko data respond karna jo aapke Next.js Checkout page ko chahiye
     res.json({
       success: true,
-      orderId: order.id,
-      amount: order.amount
+      paymentSessionId: response.data.payment_session_id,
+      orderId: response.data.order_id,
+      amount: response.data.order_amount
     });
+
   } catch (err) {
-    console.error("Razorpay Error:", err);
-    res.status(500).json({ success: false, error: err.message });
+    console.error("Cashfree Backend Error:", err);
+    res.status(500).json({ 
+      success: false, 
+      error: err.response?.data?.message || err.message 
+    });
   }
 });
 
