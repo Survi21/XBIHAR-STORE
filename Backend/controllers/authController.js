@@ -922,7 +922,13 @@ exports.googleLogin = async (req, res) => {
     }
 
     const jwtToken = generateToken(user._id);
-    res.cookie("token", jwtToken, { httpOnly: true, sameSite: "strict" });
+    // res.cookie("token", jwtToken, { httpOnly: true, sameSite: "strict" });
+
+    res.cookie("token", jwtToken, {
+  httpOnly: true,
+  sameSite: "none",
+  secure: true,
+});
     res.json({ success: true, user });
   } catch (err) {
     console.log("❌ GOOGLE LOGIN ERROR:", err);
@@ -965,7 +971,12 @@ exports.verifyOTP = async (req, res) => {
     await user.save();
 
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-    res.cookie("token", token, { httpOnly: true, sameSite: "strict" });
+    // res.cookie("token", token, { httpOnly: true, sameSite: "strict" });
+    res.cookie("token", token, {
+  httpOnly: true,
+  sameSite: "none",
+  secure: true,
+});
     res.json({ success: true });
   } catch (err) {
     res.json({ success: false });
