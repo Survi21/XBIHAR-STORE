@@ -60,6 +60,7 @@ router.post("/reset-password", resetPassword);
 
 // ✅ PROTECTED ROUTES
 router.get("/profile", protect, profile);
+router.get("/me", protect, profile);
 router.get("/check", protect, checkAuth);
 
 // ✅ LOGOUT
