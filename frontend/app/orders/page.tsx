@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 // Live tracking ke standard states
-const TRACKING_STEPS = ["Processing", "Shipped", "Delivered"];
+const TRACKING_STEPS = ["Processing", "Shipped","Out for Delivery","Delivered"];
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
