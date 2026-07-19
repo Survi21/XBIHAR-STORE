@@ -102,13 +102,11 @@ const { Cashfree, CFEnvironment } = require("cashfree-pg");
 //   process.env.CASHFREE_SECRET_KEY
 // );
 
-const { Cashfree } = require("cashfree-pg");
-
-// Direct credentials initialize karein
-Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID;
-Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
-Cashfree.XEnvironment ="PRODUCTION" // Ya direct "PRODUCTION" string bhi de sakte hain
-
+const cashfree = new Cashfree(
+  CFEnvironment.PRODUCTION,
+  process.env.CASHFREE_APP_ID,      // 👈 CASHFREE_CLIENT_ID ki jagah ye
+  process.env.CASHFREE_SECRET_KEY
+);
 // 💳 Checkout Route (Cashfree Version)
 router.post("/checkout", async (req, res) => {
   try {
