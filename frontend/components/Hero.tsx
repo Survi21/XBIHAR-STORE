@@ -26,7 +26,7 @@ export default function Hero() {
         {/* LOGO */}
         <div className="flex justify-center mb-6">
           <Image
-            src="/logoa.png"
+            src="/logoa.PNG"
             alt="logo"
             width={250}
             height={250}
