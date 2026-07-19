@@ -25,7 +25,7 @@ export default function ProductPage() {
   useEffect(() => {
     const fetchLiveProducts = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/admin/products");
+        const res = await fetch("https://xbihar.onrender.com/api/admin/products");
         const data = await res.json();
         if (data.success) {
           setProducts(data.products || []);
@@ -53,7 +53,7 @@ export default function ProductPage() {
 
   const checkDelivery = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/shipping/rates", {
+      const res = await fetch("https://xbihar.onrender.com/api/shipping/rates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pincode, weight: ITEM_WEIGHT }),
@@ -98,14 +98,18 @@ export default function ProductPage() {
         return (
           <section
             key={product._id} // 🎯 MongoDB dynamic id handler
-            className="max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-16 border-b border-zinc-800"
-          >
+          //   className="max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-16 border-b border-zinc-800"
+          // >
+
+
+         className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-24 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 border-b border-zinc-800">
             {/* LEFT SIDE GALLERY */}
             <ProductGallery images={product.images || []} />
 
             {/* RIGHT SIDE DETAILS */}
             <div>
-              <h2 className="font-orbitron text-3xl uppercase">{product.title}</h2>
+              {/* <h2 className="font-orbitron text-3xl uppercase">{product.title}</h2> */}
+              <h2 className="font-orbitron text-xl sm:text-2xl md:text-3xl uppercase tracking-wide break-words">{product.title}</h2>
 
               {/* PRICE MATRIX */}
               <div className="mt-6 flex items-center gap-3">
@@ -145,7 +149,7 @@ export default function ProductPage() {
               </div>
 
               {/* 👕 DYNAMIC SIZES WITH STOCK VALIDATION */}
-              <div className="mt-10 font-['Inter']">
+              {/* <div className="mt-10 font-['Inter']">
                 <h3 className="mb-4 text-lg font-orbitron">SELECT SIZE</h3>
                 <div className="flex gap-3">
                   {["S", "M", "L", "XL"].map((sizeName) => {
@@ -172,14 +176,64 @@ export default function ProductPage() {
                     );
                   })}
                 </div>
-              </div>
+              </div> */}
+
+
+{/* 👕 DYNAMIC SIZES WITH STOCK VALIDATION */}
+<div className="mt-10 font-['Inter']">
+  <h3 className="mb-4 text-lg font-orbitron">SELECT SIZE</h3>
+  <div className="flex gap-3">
+    {["S", "M", "L", "XL"].map((sizeName) => {
+      const sizeObj = product.sizes?.find((s: any) => s.size === sizeName);
+      const stockAvailable = sizeObj ? sizeObj.stock : 0;
+      const isOutOfStock = stockAvailable === 0;
+
+      return (
+        <button
+          key={sizeName}
+          disabled={isOutOfStock}
+          onClick={() => setSelectedSize(sizeName)}
+          className={`w-14 h-14 rounded-xl border text-xs font-bold transition flex flex-col items-center justify-center ${
+            isOutOfStock
+              ? "border-zinc-800 text-zinc-600 bg-zinc-950 cursor-not-allowed line-through"
+              : selectedSize === sizeName
+              ? "bg-white text-black border-white"
+              : "border-zinc-700 text-white hover:border-white"
+          }`}
+        >
+          <span>{sizeName}</span>
+          {isOutOfStock && <span className="text-[9px] text-red-500 font-sans tracking-tight">OUT</span>}
+        </button>
+      );
+    })}
+  </div>
+
+  {/* 🔥 DYNAMIC STOCK COUNTER ALERT (Line 141 ke aas-paas paste hoga) */}
+  {(() => {
+    const currentSizeObj = product.sizes?.find((s: any) => s.size === selectedSize);
+    const stockLeft = currentSizeObj ? currentSizeObj.stock : 0;
+
+    if (selectedSize && stockLeft > 0 && stockLeft < 10) {
+      return (
+        <div className="mt-4 flex items-center gap-2 text-xs text-red-500 font-orbitron font-medium tracking-wide animate-pulse bg-red-950/20 border border-red-900/30 px-4 py-2 rounded-xl w-max">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-600"></span>
+          Hurry! Only {stockLeft} left in size {selectedSize}
+        </div>
+      );
+    }
+    return null;
+  })()}
+</div>
+
 
               {/* 🚚 DELIVERY ENGINE */}
               <div className="mt-10 border-t border-zinc-800 pt-6">
                 <h3 className="font-orbitron text-lg mb-4">DELIVERY OPTIONS</h3>
                 {!checked ? (
                   <>
-                    <div className="flex gap-3 text-xl font-['Inter']">
+                    {/* <div className="flex gap-3 text-xl font-['Inter']"> */}
+
+                    <div className="flex flex-col sm:flex-row gap-3 text-xl font-['Inter'] w-full">
                       <input
                         type="text"
                         maxLength={6}
@@ -258,7 +312,7 @@ export default function ProductPage() {
                   onClick={async () => {
                     try {
                       const user = JSON.parse(localStorage.getItem("user") || "{}");
-                      const response = await fetch("http://localhost:5000/api/wishlist/add", {
+                      const response = await fetch("https://xbihar.onrender.com/api/wishlist/add", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({

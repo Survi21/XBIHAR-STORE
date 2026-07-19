@@ -10,7 +10,7 @@ export default function UserDropdown() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/auth/profile", {
+    fetch("https://xbihar.onrender.com/api/auth/profile", {
       credentials: "include",
     })
       .then(res => res.json())

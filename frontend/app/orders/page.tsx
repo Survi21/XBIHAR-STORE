@@ -15,7 +15,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     // 1. USER PROFILE FETCH
-    fetch("http://localhost:5000/api/auth/profile", {
+    fetch("https://xbihar.onrender.com/api/auth/profile", {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -25,7 +25,7 @@ export default function OrdersPage() {
       .catch((err) => console.log("Profile load failed", err));
 
     // 2. FIXED API FETCH (Sync with your controller response)
-    fetch("http://localhost:5000/api/orders/myorders", {
+    fetch("https://xbihar.onrender.com/api/orders/myorders", {
       credentials: "include",
     })
       .then((res) => res.json())

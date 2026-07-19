@@ -23,13 +23,26 @@ export default function ProductGallery({ images }: ProductGalleryProps) {
     }
   }, [images]);
 
+  // const getSafeSrc = (srcString: string) => {
+  //   if (!srcString) return "/placeholder.png";
+  //   if (srcString.startsWith("/") || srcString.startsWith("http")) {
+  //     return srcString;
+  //   }
+  //   return `/${srcString}`;
+  // };
+
+
   const getSafeSrc = (srcString: string) => {
-    if (!srcString) return "/placeholder.png";
-    if (srcString.startsWith("/") || srcString.startsWith("http")) {
-      return srcString;
-    }
-    return `/${srcString}`;
-  };
+  // 🌟 AGAR DATA DUDHIYA/KHAALI HAI TOH DIREKT PLACEHOLDER IMAGE PAR BHEJEGA
+  if (!srcString || srcString.trim() === "" || srcString === "undefined" || srcString === "null") {
+    return "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2070&auto=format&fit=crop"; 
+  }
+  
+  if (srcString.startsWith("/") || srcString.startsWith("http")) {
+    return srcString;
+  }
+  return `/${srcString}`;
+};
 
   const handleNext = useCallback(() => {
     setIsZoomed(false); // Reset zoom on change

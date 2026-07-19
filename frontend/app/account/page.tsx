@@ -11,7 +11,7 @@ export default function AccountPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/auth/profile", {
+    fetch("https://xbihar.onrender.com/api/auth/me", {
       credentials: "include", 
     })
       .then((res) => {
@@ -90,7 +90,7 @@ export default function AccountPage() {
 
           <button
             onClick={async () => {
-              await fetch("http://localhost:5000/api/auth/logout", {
+              await fetch("https://xbihar.onrender.com/api/auth/logout", {
                 method: "POST",
                 credentials: "include",
               });

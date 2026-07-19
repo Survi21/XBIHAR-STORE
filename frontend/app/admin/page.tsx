@@ -36,9 +36,9 @@ export default function MegaAdminDashboard() {
     try {
       setLoading(true);
       const [orderRes, prodRes, coupRes] = await Promise.all([
-        fetch("http://localhost:5000/api/admin/orders").then(r => r.json()),
-        fetch("http://localhost:5000/api/admin/products").then(r => r.json()),
-        fetch("http://localhost:5000/api/admin/coupons").then(r => r.json())
+        fetch("https://xbihar.onrender.com/api/admin/orders").then(r => r.json()),
+        fetch("https://xbihar.onrender.com/api/admin/products").then(r => r.json()),
+        fetch("https://xbihar.onrender.com/api/admin/coupons").then(r => r.json())
       ]);
 
       if (orderRes.success) {
@@ -124,7 +124,7 @@ const handleProductSubmit = async (e: React.FormEvent) => {
       { size: "XL", stock: Number(productForm.stockXL || 0) }
     ];
 
-    const res = await fetch("http://localhost:5000/api/admin/products", {
+    const res = await fetch("https://xbihar.onrender.com/api/admin/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -170,7 +170,7 @@ const handleProductSubmit = async (e: React.FormEvent) => {
   const handleCouponSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/admin/coupons", {
+      const res = await fetch("https://xbihar.onrender.com/api/admin/coupons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -192,7 +192,7 @@ const handleProductSubmit = async (e: React.FormEvent) => {
 const deleteCoupon = async (id: string) => {
   if (!window.confirm("🚨 Kya aap sach mein is coupon ko delete karna chahte hain?")) return;
   try {
-    const res = await fetch(`http://localhost:5000/api/admin/coupons/${id}`, {
+    const res = await fetch(`https://xbihar.onrender.com/api/admin/coupons/${id}`, {
       method: "DELETE",
     });
     const data = await res.json();
@@ -212,7 +212,7 @@ const deleteCoupon = async (id: string) => {
   // Shiprocket automated dispatch action
   const dispatchShiprocket = async (orderId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/orders/${orderId}/dispatch`, { method: "POST" });
+      const res = await fetch(`https://xbihar.onrender.com/api/admin/orders/${orderId}/dispatch`, { method: "POST" });
       const data = await res.json();
       if (data.success) {
         alert(`🚚 Shiprocket Alert: Order Dispatched! AWB Tracking Generated: ${data.awb}`);
@@ -224,7 +224,7 @@ const deleteCoupon = async (id: string) => {
   // Status changes listener dropdown
   const updateStatus = async (orderId: string, newStatus: string) => {
     try {
-      await fetch(`http://localhost:5000/api/admin/orders/${orderId}/status`, {
+      await fetch(`https://xbihar.onrender.com/api/admin/orders/${orderId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),

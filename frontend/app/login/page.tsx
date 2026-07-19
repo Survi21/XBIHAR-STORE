@@ -242,6 +242,7 @@ export default function LoginPage() {
 
   // ❌ Validation Messages State
   const [uiError, setUiError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const router = useRouter();
 
@@ -250,7 +251,7 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/auth/check", {
+    fetch("https://xbihar.onrender.com/api/auth/check", {
       credentials: "include",
     }).then((res) => {
       if (res.ok) {
@@ -263,7 +264,7 @@ export default function LoginPage() {
   const handleLogin = async () => {
     setUiError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetch("https://xbihar.onrender.com/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -290,7 +291,7 @@ export default function LoginPage() {
   // ✅ 2. VERIFY LOGIN OTP
   const handleVerifyOtp = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/verify-otp", {
+      const res = await fetch("https://xbihar.onrender.com/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -319,7 +320,7 @@ export default function LoginPage() {
       return;
     }
     try {
-      const res = await fetch("http://localhost:5000/api/auth/forgot-password", {
+      const res = await fetch("https://xbihar.onrender.com/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -340,7 +341,7 @@ export default function LoginPage() {
   const handleResetPasswordSubmit = async () => {
     setUiError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/reset-password", {
+      const res = await fetch("https://xbihar.onrender.com/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp: forgotOtp, newPassword }),
@@ -434,14 +435,36 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-
+{/* 
             <input
               type="password"
               placeholder="Password"
               className="font-['Inter'] w-full p-3 bg-zinc-900 border border-zinc-800 rounded outline-none"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-            />
+            /> */}
+
+
+            <div className="relative w-full mb-4">
+  <input
+    type={showPassword ? "text" : "password"}
+    placeholder="Password"
+    className="font-['Inter'] w-full p-3 bg-zinc-900 border border-zinc-800 rounded outline-none pr-10"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+  />
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition focus:outline-none"
+  >
+    {showPassword ? (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+    ) : (
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+    )}
+  </button>
+</div>
 
             {/* Forget Password Trigger */}
             <div className="flex justify-end mt-2 mb-4">
@@ -465,7 +488,7 @@ export default function LoginPage() {
                 <GoogleLogin
                   useOneTap={false}
                   onSuccess={async (credentialResponse) => {
-                    const res = await fetch("http://localhost:5000/api/auth/google-login", {
+                    const res = await fetch("https://xbihar.onrender.com/api/auth/google-login", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       credentials: "include",
@@ -483,7 +506,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            <p className="text-center mt-6 text-zinc-400">
+            <p className="text-center mt-6 text-zinc-400 font-['Inter'] ">
               No account?{" "}
               <Link href="/register" className="underline text-white">
                 Register

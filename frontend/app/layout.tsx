@@ -31,10 +31,62 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// export const metadata: Metadata = {
+//   title: "XBIHAR",
+//   description: "Crafted in Pride",
+// };
+
+
 export const metadata: Metadata = {
   title: "XBIHAR",
   description: "Crafted in Pride",
 };
+
+// 🌟 NAYA FORCED VIEWPORT ENGINE: Jo mobile phone par website ko zoom hone ya text ko cutne se rokega
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
+// export default function RootLayout({
+//   children,
+// }: {
+//   children: React.ReactNode;
+// }) {
+//   return (
+//     <html lang="en" className="h-full antialiased">
+//       <body className="min-h-full flex flex-col bg-black text-white">
+
+//         <GoogleOAuthProvider clientId="754775338125-o0jqgikp1bvdse7ugerna931a0mv3a7p.apps.googleusercontent.com">
+
+//           <CartProvider>
+//             <WishlistProvider>
+//               {children}
+//             </WishlistProvider>
+//           </CartProvider>
+
+//         </GoogleOAuthProvider>
+
+//       </body>
+//     </html>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -44,17 +96,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-black text-white">
+    // Humne yahan fonts ke variables ko inject kar diya taaki font size break na ho
+    <html 
+      lang="en" 
+      className={`${geistSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col bg-black text-white overflow-x-hidden w-full selection:bg-white selection:text-black">
 
         <GoogleOAuthProvider clientId="754775338125-o0jqgikp1bvdse7ugerna931a0mv3a7p.apps.googleusercontent.com">
-
           <CartProvider>
             <WishlistProvider>
-              {children}
+              {/* Har page ko full mobile layout structure me wrap karne ke liye flex-1 main block */}
+              <main className="flex-1 w-full max-w-full box-border">
+                {children}
+              </main>
             </WishlistProvider>
           </CartProvider>
-
         </GoogleOAuthProvider>
 
       </body>

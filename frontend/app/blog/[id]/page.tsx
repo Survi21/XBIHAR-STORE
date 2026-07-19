@@ -27,12 +27,17 @@ export default async function BlogDetails({
         <img
           src={blog.image}
           alt={blog.title}
-          className="w-full rounded-2xl mb-10 "
+          className="w-full h-auto rounded-2xl mb-10 object-contain max-h-[500px] bg-zinc-900"
         />
-
+{/* 
         <h1 className="font-orbitron text-4xl font-bold mb-6 text-transform: uppercase ">
           {blog.title}
-        </h1>
+        </h1> */}
+
+       
+       <h1 className="font-orbitron text-2xl sm:text-3xl md:text-4xl font-bold mb-6 uppercase break-words">
+  {blog.title}
+</h1>
 
         <div className="font-['Inter'] whitespace-pre-line text-zinc-300 leading-6">
           {blog.content}

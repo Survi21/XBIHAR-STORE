@@ -19,7 +19,7 @@ export default function ContactPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:5000/api/contact", {
+      const res = await fetch("https://xbihar.onrender.com/api/contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -60,7 +60,7 @@ export default function ContactPage() {
             onChange={(e) =>
               setForm({ ...form, name: e.target.value })
             }
-            className="w-full bg-zinc-900 p-4 rounded-xl"
+            className="w-full bg-zinc-900 p-4 rounded-xl font-inter"
           />
 
           <input

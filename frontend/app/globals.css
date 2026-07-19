@@ -174,3 +174,62 @@
   font-size: 18px;
   font-weight: 900;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ==========================================
+   🔥 GLOBAL AUTOMATIC RESPONSIVE SYSTEM (Tailwind v4)
+   ========================================== */
+
+/* 1. Universal Overflows: Kisi bhi cheez ko screen se right side bhagne nahi dega */
+html, body, main, #__next {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* 2. Mobile & Tablet Force Adjustments (Screens below 1024px) */
+@media (max-width: 1024px) {
+  /* Agar local code me kahin `w-[1200px]` jaisi fixed widths hain, to unhe flexible banayega */
+  div[class*="w-["], section[class*="w-["] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Aapke website ke main containers ko phone me dono side se thoda safe gap (padding) dega */
+  .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl {
+    max-width: 100% !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* 3. Pure Mobile Screen Fixes (Screens below 768px) */
+@media (max-width: 768px) {
+  /* Jo grid laptop me 3, 4 ya 5 columns ki thi, phone me use automatic stack kar dega */
+  div[class*="grid-cols-3"], 
+  div[class*="grid-cols-4"], 
+  div[class*="grid-cols-5"] {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
+    gap: 1rem !important;
+  }
+
+  /* Fixed layout tables ya cart items ko automatic vertical block bana dega */
+  .table-responsive, .cart-items-wrapper {
+    display: block !important;
+    width: 100% !important;
+  }
+}
+
+
+

@@ -18,10 +18,7 @@ export default function BlogPage() {
         <h1 className="font-orbitron text-4xl md:text-7xl font-black tracking-wider">
           BLOG
         </h1>
-{/* 
-        <p className="mt-4 text-zinc-400 tracking-[5px] uppercase">
-         Culture . Pride .
-        </p> */}
+
       </section>
 
       {/* Categories */}
@@ -71,16 +68,20 @@ PROCESS
               <img
   src={blog.image}
   alt={blog.title}
-  className="w-full h-72 object-cover"
+  className="w-full h-auto max-h-72 object-contain bg-zinc-900"
 />
               {/* Content */}
               <div className="p-8">
 
              
 
-                <h2 className=" font-orbitron text-3xl font-bold mt-4 leading-tight text-transform: uppercase ">
+                {/* <h2 className=" font-orbitron text-3xl font-bold mt-4 leading-tight text-transform: uppercase ">
                   {blog.title}
-                </h2>
+                </h2> */}
+
+                <h2 className="font-orbitron text-xl sm:text-2xl md:text-3xl font-bold mt-4 leading-tight uppercase break-words">
+  {blog.title}
+</h2>
 
                 <p className="font-['Inter'] mt-5 text-zinc-400 leading-8">
                   {blog.description}
@@ -104,7 +105,9 @@ PROCESS
    <section className="border-t border-zinc-900 py-24">
   <div className="max-w-5xl mx-auto text-center px-6">
 
-    <h2 className="font-orbitron   md:text-3xl font-black leading-tight">
+    {/* <h2 className="font-orbitron   md:text-3xl font-black leading-tight"> */}
+
+    <h2 className="font-orbitron text-xl sm:text-2xl md:text-3xl font-black leading-tight break-words">
       THIS ISN'T JUST CLOTHING.
       <br />
       IT'S OUR CULTURE.

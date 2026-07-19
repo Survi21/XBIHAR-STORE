@@ -12,7 +12,7 @@ export default function Newsletter() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/subscribe", {
+      const res = await fetch("https://xbihar.onrender.com/api/subscribe", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -46,12 +46,12 @@ export default function Newsletter() {
         placeholder="Email Address"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="w-full mt-8 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-4"
+        className="w-full mt-8 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-4 font-['Inter'] "
       />
 
       <button
         onClick={handleSubscribe}
-        className="mt-4 w-full bg-white text-black py-4 rounded-xl"
+        className="mt-4 w-full bg-white text-black py-4 rounded-xl font-['Orbitron']"
       >
         Subscribe
       </button>

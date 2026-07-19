@@ -7,7 +7,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/auth/profile", {
+    fetch("https://xbihar.onrender.com/api/auth/profile", {
       credentials: "include",
     })
       .then(res => res.json())
@@ -73,7 +73,7 @@ export default function ProfilePage() {
           <button
             onClick={async () => {
               await fetch(
-                "http://localhost:5000/api/auth/logout",
+                "https://xbihar.onrender.com/api/auth/logout",
                 {
                   method: "POST",
                   credentials: "include",
