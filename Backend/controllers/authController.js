@@ -1199,8 +1199,17 @@ exports.profile = async (req, res) => {
 };
 
 // ✅ LOGOUT
+// exports.logout = (req, res) => {
+//   res.clearCookie("token");
+//   res.json({ success: true });
+// };
+
 exports.logout = (req, res) => {
-  res.clearCookie("token");
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "none",
+    secure: true,
+  });
   res.json({ success: true });
 };
 
