@@ -17,7 +17,7 @@ export default function NewArrivalsPage() {
         playsInline
         className="absolute inset-0 w-full h-full object-cover opacity-100"
       >
-        <source src="/comming-soon.mp4" type="video/mp4" />
+        <source src="/comming-soon.MP4" type="video/mp4" />
       </video>
 
       {/* ✅ Center Text */}
