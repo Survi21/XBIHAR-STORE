@@ -23,19 +23,34 @@ export default function ProductPage() {
 
   // 🌐 1. Live API se Products data fetch karna
   useEffect(() => {
+    // const fetchLiveProducts = async () => {
+    //   try {
+    //     // const res = await fetch("https://xbihar.onrender.com/api/admin/products");
+    //     const res = await fetch("https://xbihar.onrender.com/api/products");
+    //     const data = await res.json();
+    //     if (data.success) {
+    //       setProducts(data.products || []);
+    //     }
+    //   } catch (err) {
+    //     console.error("Error fetching live products:", err);
+    //   } finally {
+    //     setLoading(false);
+    //   }
+    // };
+
+
     const fetchLiveProducts = async () => {
-      try {
-        const res = await fetch("https://xbihar.onrender.com/api/admin/products");
-        const data = await res.json();
-        if (data.success) {
-          setProducts(data.products || []);
-        }
-      } catch (err) {
-        console.error("Error fetching live products:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  try {
+    const res = await fetch("https://xbihar.onrender.com/api/products");
+    const data = await res.json();
+    // getProducts seedha array deta hai, {success, products} nahi
+    setProducts(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error("Error fetching live products:", err);
+  } finally {
+    setLoading(false);
+  }
+};
     fetchLiveProducts();
   }, []);
 
