@@ -3,7 +3,10 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order'); // Aapka Order model path check kar lijiye ek baar
 
-router.post('/shiprocket-webhook', async (req, res) => {
+// router.post('/shiprocket-webhook', async (req, res) => {
+  router.post('/order-status-update', async (req, res) => {git add .
+git commit -m "Rename webhook route to avoid restricted keywords"
+git push
   try {
     const { order_id, status } = req.body;
 
