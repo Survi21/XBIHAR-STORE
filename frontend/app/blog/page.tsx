@@ -133,7 +133,6 @@
 
 
 
-
 "use client";
 
 import Navbar from "@/components/Navbar";
@@ -141,10 +140,30 @@ import Link from "next/link";
 import { blogs } from "@/data/blogs";
 import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export default function BlogPage() {
   const [showNewsletter, setShowNewsletter] = useState(false);
+  const newsletterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        newsletterRef.current &&
+        !newsletterRef.current.contains(event.target as Node)
+      ) {
+        setShowNewsletter(false);
+      }
+    }
+
+    if (showNewsletter) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showNewsletter]);
 
   return (
     <main className="bg-black text-white min-h-screen">
@@ -204,7 +223,6 @@ export default function BlogPage() {
                 alt={blog.title}
                 className="w-full h-auto max-h-72 object-contain bg-zinc-900"
               />
-              {/* Content */}
               <div className="p-8">
 
                 <h2 className="font-orbitron text-xl sm:text-2xl md:text-3xl font-bold mt-4 leading-tight uppercase break-words">
@@ -249,7 +267,7 @@ export default function BlogPage() {
               Be A Part Of The Movement
             </button>
           ) : (
-            <div className="mt-10">
+            <div ref={newsletterRef} className="mt-10">
               <Newsletter />
             </div>
           )}
