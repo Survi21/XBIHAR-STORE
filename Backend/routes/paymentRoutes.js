@@ -96,11 +96,18 @@ const router = express.Router();
 const { Cashfree, CFEnvironment } = require("cashfree-pg");
 
 // 🔑 CASHFREE CONFIGURATION SETUP (v6 SDK ka tarika)
-const cashfree = new Cashfree(
-  CFEnvironment.PRODUCTION,
-  process.env.CASHFREE_CLIENT_ID,
-  process.env.CASHFREE_SECRET_KEY
-);
+// const cashfree = new Cashfree(
+//   CFEnvironment.PRODUCTION,
+//   process.env.CASHFREE_CLIENT_ID,
+//   process.env.CASHFREE_SECRET_KEY
+// );
+
+const { Cashfree } = require("cashfree-pg");
+
+// Direct credentials initialize karein
+Cashfree.XClientId = process.env.CASHFREE_CLIENT_ID;
+Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
+Cashfree.XEnvironment ="PRODUCTION" // Ya direct "PRODUCTION" string bhi de sakte hain
 
 // 💳 Checkout Route (Cashfree Version)
 router.post("/checkout", async (req, res) => {
