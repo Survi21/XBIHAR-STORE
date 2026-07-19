@@ -212,23 +212,198 @@
 
 
 
+// const Order = require("../models/Order");
+// const User = require("../models/User");
+// const nodemailer = require("nodemailer"); 
+// const axios = require("axios"); // ⚡ Cashfree API status verification ke liye
+// const { getCourierRates } = require("../services/shiprocketRates"); 
+
+// const {
+//   createShiprocketOrder,
+// } = require("../services/shiprocketService");
+
+// const transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     user: process.env.EMAIL_USER, 
+//     pass: process.env.EMAIL_PASS, 
+//   },
+// });
+
+// // 🔥 PINCODE AND WEIGHT BASED LIVE DELIVERY CHARGE CALCULATOR
+// exports.calculateLiveShipping = async (req, res) => {
+//   try {
+//     const { pincode, weight } = req.body;
+//     if (!pincode) {
+//       return res.status(400).json({ success: false, message: "Pincode is required" });
+//     }
+    
+//     const rateData = await getCourierRates(pincode, weight);
+    
+//     if (rateData.success && rateData.courier) {
+//       return res.status(200).json({ 
+//         success: true, 
+//         courier: {
+//           charge: Number(rateData.courier.charge),
+//           name: rateData.courier.name
+//         }
+//       });
+//     } else {
+//       const defaultCharge = weight > 0.5 ? 120 : 80;
+//       return res.status(200).json({ 
+//         success: true, 
+//         courier: { charge: defaultCharge, name: "Standard Secure Delivery" } 
+//       });
+//     }
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+// // ✅ CREATE ORDER ROUTE (Saves order right after successful payment callback)
+// exports.createOrder = async (req, res) => {
+//   try {
+//     if (!req.user) {
+//       return res.status(401).json({ message: "Login required" });
+//     }
+
+//     console.log("🔥 CASHFREE DATABASE LOGGING API HIT - SYNCED WITH FRONTEND");
+//     const user = await User.findById(req.user.id || req.user._id);
+
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     // Direct database entry with marked status 'Paid' because frontend hits this only on redirect success
+//     const order = await Order.create({
+//       user: user._id,
+//       name: req.body.name,
+//       email: req.body.email,
+//       deliveryPhone: req.body.phone,
+//       shippingCharge: req.body.shippingCharge,
+//       totalPrice: req.body.totalPrice,
+//       paymentStatus: "Paid", // Confirmed payment mark
+//       cfOrderId: req.body.cashfreeOrderId, // Syncs with frontend proof identifier
+      
+//       shippingAddress: {
+//         address: req.body.shippingAddress?.address || req.body.address,
+//         city: req.body.shippingAddress?.city || req.body.city,
+//         state: req.body.shippingAddress?.state || req.body.state,
+//         pincode: req.body.shippingAddress?.pincode || req.body.pincode,
+//       },
+//       shippingAddressPincode: req.body.shippingAddress?.pincode || req.body.pincode,
+      
+//       products: req.body.products.map((p) => ({
+//         product: p.productId, 
+//         productId: p.productId,
+//         title: p.title,
+//         price: p.price,
+//         image: p.image,
+//         quantity: p.quantity,
+//         size: p.size,
+//       })),
+//     });
+
+//     // 🚀 SHIPROCKET SYNCHRONIZATION
+//     const shiprocketRes = await createShiprocketOrder(order);
+//     if (shiprocketRes) {
+//       order.shipmentId = shiprocketRes.shipment_id;
+//       order.courier = shiprocketRes.courier_name;
+//       order.trackingUrl = shiprocketRes.tracking_url;
+//       await order.save();
+//     }
+
+//     // 📧 NODEMAILER ORDER DISPATCH SUCCESS TRIGGER
+//     const orderPlacedMailOptions = {
+//       from: process.env.EMAIL_USER,
+//       to: order.email, 
+//       subject: `🚨 Drop Secured! Order Confirmed - #${order._id.toString().substring(0, 8)}`,
+//       html: `
+//         <div style="background-color: #000; color: #fff; padding: 30px; font-family: sans-serif; max-w: 600px; border: 1px solid #222;">
+//           <h1 style="color: #ff0000; font-size: 24px; text-transform: uppercase;">Order Confirmed!</h1>
+//           <p>Hi ${order.name},</p>
+//           <p>Your drop has been secured successfully via secure transaction.</p>
+//           <hr style="border-color: #222;" />
+//           <p><strong>Order ID:</strong> ${order._id}</p>
+//           <p><strong>Total Paid:</strong> ₹${order.totalPrice}</p>
+//           <p><strong>Shipping Address:</strong> ${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}</p>
+//         </div>
+//       `,
+//     };
+
+//     transporter.sendMail(orderPlacedMailOptions, (err, info) => {
+//       if (err) console.log("❌ Placed Email Error:", err);
+//     });
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "Order processed and logged successfully!",
+//       order,
+//       shiprocket: shiprocketRes
+//     });
+
+//   } catch (error) {
+//     console.log("❌ DATABASE ORDER LOGGER ERROR:", error.message);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+// // ✅ STEP 2: BACKUP PAYMENT VERIFICATION (Syncs both frontend tracking schemes)
+// exports.verifyPayment = async (req, res) => {
+//   try {
+//     const cfOrderId = req.body.cashfreeOrderId || req.body.cfOrderId; 
+    
+//     const order = await Order.findOne({ cfOrderId });
+//     if (!order) return res.status(404).json({ success: false, message: "Order records not found" });
+
+//     const cashfreeEnv = process.env.CASHFREE_ENV === "production" ? "api" : "sandbox";
+    
+//     const verifyRes = await axios.get(
+//       `https://${cashfreeEnv}.cashfree.com/pg/orders/${cfOrderId}`,
+//       {
+//         headers: {
+//           "x-client-id": process.env.CASHFREE_APP_ID,
+//           "x-client-secret": process.env.CASHFREE_SECRET_KEY,
+//           "x-api-version": "2023-08-01"
+//         }
+//       }
+//     );
+
+//     if (verifyRes.data.order_status === "PAID") {
+//       order.paymentStatus = "Paid";
+//       await order.save();
+//       return res.status(200).json({ success: true, message: "Payment verified!", order });
+//     } else {
+//       return res.status(400).json({ success: false, message: "Payment not completed or failed" });
+//     }
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+// // ... Rest of your controller codes remain untouched
+// exports.getMyOrders = async (req, res) => { try { const orders = await Order.find({ user: req.user.id || req.user._id }).sort({ createdAt: -1 }); res.json({ success: true, orders }); } catch (error) { res.status(500).json({ success: false, message: error.message }); } };
+// exports.getOrderById = async (req, res) => { try { const order = await Order.findById(req.params.id); if (!order) return res.status(404).json({ success: false, message: "Order not found" }); res.json(order); } catch (error) { res.status(500).json({ success: false, message: error.message }); } };
+// exports.getAllOrders = async (req, res) => { try { const orders = await Order.find().sort({ createdAt: -1 }); res.json(orders); } catch (error) { res.status(500).json({ message: error.message }); } };
+// exports.updateOrderStatus = async (req, res) => { try { const { orderStatus } = req.body; const order = await Order.findByIdAndUpdate(req.params.id, { orderStatus }, { new: true }); if (!order) return res.status(404).json({ message: "Order not found" }); res.json(order); } catch (error) { res.status(500).json({ message: error.message }); } };
+
+
+
+
+
+
+
 const Order = require("../models/Order");
 const User = require("../models/User");
-const nodemailer = require("nodemailer"); 
 const axios = require("axios"); // ⚡ Cashfree API status verification ke liye
-const { getCourierRates } = require("../services/shiprocketRates"); 
-
+const { getCourierRates } = require("../services/shiprocketRates");
+const { Resend } = require("resend");
 const {
   createShiprocketOrder,
 } = require("../services/shiprocketService");
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER, 
-    pass: process.env.EMAIL_PASS, 
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+const SENDER_EMAIL = "XBIHAR <otp@xbihar.com>";
 
 // 🔥 PINCODE AND WEIGHT BASED LIVE DELIVERY CHARGE CALCULATOR
 exports.calculateLiveShipping = async (req, res) => {
@@ -237,12 +412,12 @@ exports.calculateLiveShipping = async (req, res) => {
     if (!pincode) {
       return res.status(400).json({ success: false, message: "Pincode is required" });
     }
-    
+
     const rateData = await getCourierRates(pincode, weight);
-    
+
     if (rateData.success && rateData.courier) {
-      return res.status(200).json({ 
-        success: true, 
+      return res.status(200).json({
+        success: true,
         courier: {
           charge: Number(rateData.courier.charge),
           name: rateData.courier.name
@@ -250,9 +425,9 @@ exports.calculateLiveShipping = async (req, res) => {
       });
     } else {
       const defaultCharge = weight > 0.5 ? 120 : 80;
-      return res.status(200).json({ 
-        success: true, 
-        courier: { charge: defaultCharge, name: "Standard Secure Delivery" } 
+      return res.status(200).json({
+        success: true,
+        courier: { charge: defaultCharge, name: "Standard Secure Delivery" }
       });
     }
   } catch (error) {
@@ -284,7 +459,7 @@ exports.createOrder = async (req, res) => {
       totalPrice: req.body.totalPrice,
       paymentStatus: "Paid", // Confirmed payment mark
       cfOrderId: req.body.cashfreeOrderId, // Syncs with frontend proof identifier
-      
+
       shippingAddress: {
         address: req.body.shippingAddress?.address || req.body.address,
         city: req.body.shippingAddress?.city || req.body.city,
@@ -292,9 +467,9 @@ exports.createOrder = async (req, res) => {
         pincode: req.body.shippingAddress?.pincode || req.body.pincode,
       },
       shippingAddressPincode: req.body.shippingAddress?.pincode || req.body.pincode,
-      
+
       products: req.body.products.map((p) => ({
-        product: p.productId, 
+        product: p.productId,
         productId: p.productId,
         title: p.title,
         price: p.price,
@@ -313,27 +488,30 @@ exports.createOrder = async (req, res) => {
       await order.save();
     }
 
-    // 📧 NODEMAILER ORDER DISPATCH SUCCESS TRIGGER
-    const orderPlacedMailOptions = {
-      from: process.env.EMAIL_USER,
-      to: order.email, 
-      subject: `🚨 Drop Secured! Order Confirmed - #${order._id.toString().substring(0, 8)}`,
-      html: `
-        <div style="background-color: #000; color: #fff; padding: 30px; font-family: sans-serif; max-w: 600px; border: 1px solid #222;">
-          <h1 style="color: #ff0000; font-size: 24px; text-transform: uppercase;">Order Confirmed!</h1>
-          <p>Hi ${order.name},</p>
-          <p>Your drop has been secured successfully via secure transaction.</p>
-          <hr style="border-color: #222;" />
-          <p><strong>Order ID:</strong> ${order._id}</p>
-          <p><strong>Total Paid:</strong> ₹${order.totalPrice}</p>
-          <p><strong>Shipping Address:</strong> ${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}</p>
-        </div>
-      `,
-    };
-
-    transporter.sendMail(orderPlacedMailOptions, (err, info) => {
-      if (err) console.log("❌ Placed Email Error:", err);
-    });
+    // 📧 ORDER CONFIRMATION EMAIL (Resend)
+    try {
+      await resend.emails.send({
+        from: SENDER_EMAIL,
+        to: order.email,
+        subject: `Order Confirmed - #${order._id.toString().substring(0, 8)}`,
+        html: `
+          <div style="background-color: #000; color: #fff; padding: 30px; font-family: sans-serif; max-width: 600px; border: 1px solid #222;">
+            <h1 style="color: #ff0000; font-size: 24px; text-transform: uppercase;">Order Confirmed!</h1>
+            <p>Hi ${order.name},</p>
+            <p>Your order has been placed successfully.</p>
+            <hr style="border-color: #222;" />
+            <p><strong>Order ID:</strong> ${order._id}</p>
+            <p><strong>Total Paid:</strong> ₹${order.totalPrice}</p>
+            <p><strong>Shipping Address:</strong> ${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}</p>
+            ${order.trackingUrl ? `<p><a href="${order.trackingUrl}" style="color: #ff5555;">Track your shipment here</a></p>` : ""}
+            <p>You can also track this order anytime from your account's "My Orders" section.</p>
+          </div>
+        `,
+      });
+      console.log("✅ ORDER PLACED EMAIL SENT");
+    } catch (mailErr) {
+      console.log("❌ Order Placed Email Error:", mailErr);
+    }
 
     return res.status(201).json({
       success: true,
@@ -351,13 +529,13 @@ exports.createOrder = async (req, res) => {
 // ✅ STEP 2: BACKUP PAYMENT VERIFICATION (Syncs both frontend tracking schemes)
 exports.verifyPayment = async (req, res) => {
   try {
-    const cfOrderId = req.body.cashfreeOrderId || req.body.cfOrderId; 
-    
+    const cfOrderId = req.body.cashfreeOrderId || req.body.cfOrderId;
+
     const order = await Order.findOne({ cfOrderId });
     if (!order) return res.status(404).json({ success: false, message: "Order records not found" });
 
     const cashfreeEnv = process.env.CASHFREE_ENV === "production" ? "api" : "sandbox";
-    
+
     const verifyRes = await axios.get(
       `https://${cashfreeEnv}.cashfree.com/pg/orders/${cfOrderId}`,
       {
@@ -381,8 +559,66 @@ exports.verifyPayment = async (req, res) => {
   }
 };
 
-// ... Rest of your controller codes remain untouched
-exports.getMyOrders = async (req, res) => { try { const orders = await Order.find({ user: req.user.id || req.user._id }).sort({ createdAt: -1 }); res.json({ success: true, orders }); } catch (error) { res.status(500).json({ success: false, message: error.message }); } };
-exports.getOrderById = async (req, res) => { try { const order = await Order.findById(req.params.id); if (!order) return res.status(404).json({ success: false, message: "Order not found" }); res.json(order); } catch (error) { res.status(500).json({ success: false, message: error.message }); } };
-exports.getAllOrders = async (req, res) => { try { const orders = await Order.find().sort({ createdAt: -1 }); res.json(orders); } catch (error) { res.status(500).json({ message: error.message }); } };
-exports.updateOrderStatus = async (req, res) => { try { const { orderStatus } = req.body; const order = await Order.findByIdAndUpdate(req.params.id, { orderStatus }, { new: true }); if (!order) return res.status(404).json({ message: "Order not found" }); res.json(order); } catch (error) { res.status(500).json({ message: error.message }); } };
+// ✅ GET LOGGED-IN USER'S ORDERS
+exports.getMyOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user.id || req.user._id }).sort({ createdAt: -1 });
+    res.json({ success: true, orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ✅ GET SINGLE ORDER BY ID
+exports.getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ✅ ADMIN: GET ALL ORDERS
+exports.getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ✅ ADMIN: UPDATE ORDER STATUS (+ notify customer via email)
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { orderStatus } = req.body;
+    const order = await Order.findByIdAndUpdate(req.params.id, { orderStatus }, { new: true });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    // 📧 STATUS UPDATE EMAIL (Resend)
+    try {
+      await resend.emails.send({
+        from: SENDER_EMAIL,
+        to: order.email,
+        subject: `Order Update: ${orderStatus} - #${order._id.toString().substring(0, 8)}`,
+        html: `
+          <div style="background-color: #000; color: #fff; padding: 30px; font-family: sans-serif; max-width: 600px; border: 1px solid #222;">
+            <h2 style="text-transform: uppercase;">Order Status: ${orderStatus}</h2>
+            <p>Hi ${order.name},</p>
+            <p>Your order <strong>#${order._id.toString().substring(0, 8)}</strong> is now: <strong>${orderStatus}</strong></p>
+            ${order.trackingUrl ? `<p><a href="${order.trackingUrl}" style="color: #ff5555;">Track your shipment here</a></p>` : ""}
+          </div>
+        `,
+      });
+      console.log("✅ STATUS UPDATE EMAIL SENT");
+    } catch (mailErr) {
+      console.log("❌ Status Update Email Error:", mailErr);
+    }
+
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
