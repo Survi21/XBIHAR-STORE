@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+// import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
@@ -10,7 +11,51 @@ export default function AdminLoginPage() {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+
+const [timer, setTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (step === "otp" && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (timer === 0) {
+      setCanResend(true);
+    }
+    return () => clearInterval(interval);
+  }, [step, timer]);
+
+  const handleResendOtp = async () => {
+    if (!canResend) return;
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("https://xbihar.onrender.com/api/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTimer(60); 
+        setCanResend(false);
+      } else {
+        setError(data.message || "Resend failed");
+      }
+    } catch (err) {
+      setError("Server connection issue");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +71,8 @@ export default function AdminLoginPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setStep("otp");
+        setTimer(60);
+        setCanResend(false);
       } else {
         setError(data.message || "Login failed");
       }
@@ -93,14 +140,33 @@ export default function AdminLoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-black border border-zinc-800 p-4 rounded-xl outline-none"
             />
-            <input
+            {/* <input
               type="password"
               placeholder="Password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-black border border-zinc-800 p-4 rounded-xl outline-none"
-            />
+            /> */}
+
+<div className="relative">
+  <input
+    type={showPassword ? "text" : "password"} // <-- type yahan change hoga
+    placeholder="Password"
+    required
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    className="w-full bg-black border border-zinc-800 p-4 pr-12 rounded-xl outline-none"
+  />
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-sm font-semibold select-none"
+  >
+    {showPassword ? "HIDE" : "SHOW"}
+  </button>
+</div>
+
             <button
               type="submit"
               disabled={loading}
@@ -120,6 +186,32 @@ export default function AdminLoginPage() {
               onChange={(e) => setOtp(e.target.value)}
               className="w-full bg-black border border-zinc-800 p-4 rounded-xl outline-none tracking-widest text-center text-xl"
             />
+
+{/* 🚨 IS INPUT KE THIK NICHE YE CHIPKA DO */}
+            <div className="text-center text-sm my-2">
+              {canResend ? (
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={loading}
+                  className="text-red-500 hover:text-red-400 underline font-semibold disabled:opacity-50"
+                >
+                  Resend OTP
+                </button>
+              ) : (
+                <p className="text-zinc-500">
+                  Resend OTP in <span className="text-zinc-300 font-bold">{timer}s</span>
+                </p>
+              )}
+            </div>
+            {/* 🚨 TIMER UI BLOCK YAHAN KHATAM */}
+
+            {/* <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-white text-black py-3.5 rounded-xl font-orbitron font-bold disabled:opacity-50"
+            ></button> */}
+
             <button
               type="submit"
               disabled={loading}
