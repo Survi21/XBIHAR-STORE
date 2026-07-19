@@ -41,6 +41,14 @@ export default function AccountPage() {
     );
   }
 
+  if (!user) {
+    return (
+      <main className="bg-black text-white min-h-screen flex items-center justify-center">
+        Redirecting...
+      </main>
+    );
+  }
+
   return (
     <main className="bg-black text-white min-h-screen">
       <Navbar />
