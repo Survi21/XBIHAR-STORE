@@ -60,7 +60,7 @@ export default function ContactPage() {
             onChange={(e) =>
               setForm({ ...form, name: e.target.value })
             }
-            className="w-full bg-zinc-900 p-4 rounded-xl font-inter"
+            className="w-full bg-zinc-900 p-4 rounded-xl  font-['Inter']"
           />
 
           <input
@@ -70,7 +70,7 @@ export default function ContactPage() {
             onChange={(e) =>
               setForm({ ...form, email: e.target.value })
             }
-            className="w-full bg-zinc-900 p-4 rounded-xl"
+            className="w-full bg-zinc-900 p-4 rounded-xl  font-['Inter']"
           />
 
           <textarea
@@ -80,12 +80,12 @@ export default function ContactPage() {
             onChange={(e) =>
               setForm({ ...form, message: e.target.value })
             }
-            className="w-full bg-zinc-900 p-4 rounded-xl"
+            className="w-full bg-zinc-900 p-4 rounded-xl  font-['Inter']"
           />
 
           <button
             type="submit"
-            className="bg-white text-black px-8 py-4 rounded-xl"
+            className="bg-white text-black px-8 py-4 rounded-xl font-orbitron"
           >
             Send Message
           </button>
