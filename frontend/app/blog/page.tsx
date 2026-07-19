@@ -115,11 +115,14 @@ PROCESS
       IT'S OUR REVOLUTION.
     </h2>
 
-    <Link href="/Newsletter">
+    {/* <Link href="/Newsletter">
       <button className=" mt-10 bg-white text-black px-8 py-4 rounded-xl font-semibold hover:scale-105 transition font-['Inter']">
         Be A Part Of The Movement
       </button>
-    </Link>
+    </Link> */}
+    <div id="newsletter-section" className="mt-10">
+  <Newsletter />
+</div>
 
   </div>
 </section>
