@@ -1155,7 +1155,41 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// ✅ GOOGLE LOGIN
+// // ✅ GOOGLE LOGIN
+
+// exports.googleLogin = async (req, res) => {
+//   try {
+//     const { token } = req.body;
+//     if (!token) return res.status(400).json({ message: "No Google token" });
+
+//     const ticket = await client.verifyIdToken({
+//       idToken: token,
+//       audience: process.env.GOOGLE_CLIENT_ID,
+//     });
+//     const payload = ticket.getPayload();
+//     const email = payload.email;
+//     const name = payload.name;
+
+//     let user = await User.findOne({ email });
+//     if (!user) {
+//       user = await User.create({ name, email, isVerified: true });
+//     }
+
+//     const jwtToken = generateToken(user._id);
+
+//     res.cookie("token", jwtToken, {
+//       httpOnly: true,
+//       // sameSite: "none",
+//         sameSite: "lax",
+//       secure: true,
+//     });
+//     res.json({ success: true, user });
+//   } catch (err) {
+//     console.log("❌ GOOGLE LOGIN ERROR:", err);
+//     res.status(500).json({ message: "Google login failed" });
+//   }
+// };
+
 exports.googleLogin = async (req, res) => {
   try {
     const { token } = req.body;
@@ -1178,11 +1212,10 @@ exports.googleLogin = async (req, res) => {
 
     res.cookie("token", jwtToken, {
       httpOnly: true,
-      // sameSite: "none",
-        sameSite: "lax",
+      sameSite: "none",
       secure: true,
     });
-    res.json({ success: true, user });
+    res.json({ success: true, user, token: jwtToken });
   } catch (err) {
     console.log("❌ GOOGLE LOGIN ERROR:", err);
     res.status(500).json({ message: "Google login failed" });
@@ -1220,6 +1253,34 @@ exports.checkAuth = (req, res) => {
 };
 
 // ✅ VERIFY OTP
+// exports.verifyOTP = async (req, res) => {
+//   const { email, otp } = req.body;
+//   try {
+//     const user = await User.findOne({ email });
+//     if (!user) return res.json({ success: false, message: "User not found" });
+//     if (user.otp !== otp) return res.json({ success: false, message: "Invalid OTP" });
+//     if (user.otpExpiry < Date.now()) return res.json({ success: false, message: "OTP expired" });
+
+//     user.isVerified = true;
+//     user.otp = null;
+//     await user.save();
+
+//     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+//     res.cookie("token", token, {
+//       httpOnly: true,
+//       // sameSite: "lax",
+//       sameSite: "none",
+//       secure: true,
+//       domain: ".xbihar.com", 
+//     });
+//     res.json({ success: true });
+//   } catch (err) {
+//     res.json({ success: false });
+//   }
+// };
+
+
+
 exports.verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
   try {
@@ -1233,13 +1294,14 @@ exports.verifyOTP = async (req, res) => {
     await user.save();
 
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+    
+    // Cookie bhi set karo (desktop ke liye kaam karega) + token bhi response me bhejo (mobile ke liye)
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax",
-      // sameSite: "none",
+      sameSite: "none",
       secure: true,
     });
-    res.json({ success: true });
+    res.json({ success: true, token });
   } catch (err) {
     res.json({ success: false });
   }
