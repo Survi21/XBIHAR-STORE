@@ -30,16 +30,28 @@ export default function CheckoutPage() {
     pincode: "",
   });
 
-  const checkAuth = async () => {
-    try {
-      // const res = await fetch("http://localhost:5000/api/auth/check", { credentials: "include" });
-      const res = await fetch("https://xbihar.onrender.com/api/auth/check", { credentials: "include" });
-      return res.status === 200;
-    } catch (err) {
-      return false;
-    }
-  };
+  // const checkAuth = async () => {
+  //   try {
 
+  //     const res = await fetch("https://xbihar.onrender.com/api/auth/check", { credentials: "include" });
+  //     return res.status === 200;
+  //   } catch (err) {
+  //     return false;
+  //   }
+  // };
+const checkAuth = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) return false;
+
+  try {
+    const res = await fetch("https://xbihar.onrender.com/api/auth/check", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.status === 200;
+  } catch (err) {
+    return false;
+  }
+};
   // 🎯 FIX 1: Initial load par Cart Page se saved Delivery Charge aur Pincode auto-load karein
   useEffect(() => {
     const summary = JSON.parse(localStorage.getItem("cartSummary") || "{}");
@@ -253,11 +265,17 @@ try {
         // Jab customer payment successfully kar deta hai
         if (result.redirect) {
           try {
+            const token = localStorage.getItem("token");
             const orderResponse = await fetch("https://xbihar.onrender.com/api/orders", {
               method: "POST",
-              credentials: "include",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
+              // credentials: "include",
+              // headers: { "Content-Type": "application/json" },
+              // body: JSON.stringify({
+                headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify({
                 name: formData.name,
                 email: formData.email,
                 phone: formData.phone,
