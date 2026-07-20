@@ -22,7 +22,7 @@ export default function NewArrivalsPage() {
 
       {/* ✅ Background Video (Responsive) */}
    {/* ✅ Background Video (Perfect for Mobile & Laptop) */}
-      <video
+      {/* <video
         autoPlay
         muted
         loop
@@ -30,7 +30,20 @@ export default function NewArrivalsPage() {
         className="absolute inset-0 w-full h-full object-contain bg-black md:object-cover z-0"
       >
         <source src="/comming-soon.MP4" type="video/mp4" />
+      </video> */}
+
+
+{/* ✅ Background Video (No Black Bars on Mobile, Full Screen Everywhere) */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-fill md:object-cover z-0"
+      >
+        <source src="/comming-soon.MP4" type="video/mp4" />
       </video>
+
 
       {/* ✅ Center Text */}
       <div className="relative z-10 flex items-center justify-center h-full">
