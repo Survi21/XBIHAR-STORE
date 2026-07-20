@@ -1234,6 +1234,7 @@ exports.verifyOTP = async (req, res) => {
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
     res.cookie("token", token, {
       httpOnly: true,
+      sameSite: "lax",
       sameSite: "none",
       secure: true,
     });
