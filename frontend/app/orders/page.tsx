@@ -13,33 +13,65 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    // 1. USER PROFILE FETCH
-    fetch("https://xbihar.onrender.com/api/auth/profile", {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setUser(data.user);
-      })
-      .catch((err) => console.log("Profile load failed", err));
+  // useEffect(() => {
+  //   // 1. USER PROFILE FETCH
+  //   fetch("https://xbihar.onrender.com/api/auth/profile", {
+  //     credentials: "include",
+  //   })
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       setUser(data.user);
+  //     })
+  //     .catch((err) => console.log("Profile load failed", err));
 
-    // 2. FIXED API FETCH (Sync with your controller response)
-    fetch("https://xbihar.onrender.com/api/orders/myorders", {
-      credentials: "include",
+  //   // 2. FIXED API FETCH (Sync with your controller response)
+  //   fetch("https://xbihar.onrender.com/api/orders/myorders", {
+  //     credentials: "include",
+  //   })
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       // Safe check: Agar data.success true hai toh data.orders, warna direct array check
+  //       if (data && data.success) {
+  //         setOrders(data.orders || []);
+  //       } else if (Array.isArray(data)) {
+  //         setOrders(data);
+  //       }
+  //     })
+  //     .catch((err) => console.log("Orders load failed", err))
+  //     .finally(() => setLoading(false));
+  // }, []);
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setLoading(false);
+    return;
+  }
+
+  fetch("https://xbihar.onrender.com/api/auth/profile", {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      setUser(data.user);
     })
-      .then((res) => res.json())
-      .then((data) => {
-        // Safe check: Agar data.success true hai toh data.orders, warna direct array check
-        if (data && data.success) {
-          setOrders(data.orders || []);
-        } else if (Array.isArray(data)) {
-          setOrders(data);
-        }
-      })
-      .catch((err) => console.log("Orders load failed", err))
-      .finally(() => setLoading(false));
-  }, []);
+    .catch((err) => console.log("Profile load failed", err));
+
+  fetch("https://xbihar.onrender.com/api/orders/myorders", {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data && data.success) {
+        setOrders(data.orders || []);
+      } else if (Array.isArray(data)) {
+        setOrders(data);
+      }
+    })
+    .catch((err) => console.log("Orders load failed", err))
+    .finally(() => setLoading(false));
+}, []);
+
+
 
   // Current active index nikalne ke liye helper
   const getStepIndex = (status: string) => {

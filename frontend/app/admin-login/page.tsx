@@ -83,40 +83,77 @@ const [timer, setTimer] = useState(60);
     }
   };
 
+  // const handleVerifyOtp = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setError("");
+  //   setLoading(true);
+  //   try {
+  //     const res = await fetch("https://xbihar.onrender.com/api/auth/verify-otp", {
+  //       method: "POST",
+  //       credentials: "include",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ email, otp }),
+  //     });
+  //     const data = await res.json();
+
+  //     if (res.ok && data.success) {
+  //       // ✅ Ab role check karo
+  //       const meRes = await fetch("https://xbihar.onrender.com/api/auth/me", {
+  //         credentials: "include",
+  //       });
+  //       const meData = await meRes.json();
+
+  //       if (meData?.user?.role === "admin") {
+  //         router.push("/admin");
+  //       } else {
+  //         setError("Access denied. This account is not an admin.");
+  //       }
+  //     } else {
+  //       setError(data.message || "Invalid OTP");
+  //     }
+  //   } catch (err) {
+  //     setError("Server connection issue");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
   const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch("https://xbihar.onrender.com/api/auth/verify-otp", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp }),
+  e.preventDefault();
+  setError("");
+  setLoading(true);
+  try {
+    const res = await fetch("https://xbihar.onrender.com/api/auth/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp }),
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      localStorage.setItem("token", data.token);
+
+      const meRes = await fetch("https://xbihar.onrender.com/api/auth/me", {
+        headers: { Authorization: `Bearer ${data.token}` },
       });
-      const data = await res.json();
+      const meData = await meRes.json();
 
-      if (res.ok && data.success) {
-        // ✅ Ab role check karo
-        const meRes = await fetch("https://xbihar.onrender.com/api/auth/me", {
-          credentials: "include",
-        });
-        const meData = await meRes.json();
-
-        if (meData?.user?.role === "admin") {
-          router.push("/admin");
-        } else {
-          setError("Access denied. This account is not an admin.");
-        }
+      if (meData?.user?.role === "admin") {
+        router.push("/admin");
       } else {
-        setError(data.message || "Invalid OTP");
+        setError("Access denied. This account is not an admin.");
+        localStorage.removeItem("token");
       }
-    } catch (err) {
-      setError("Server connection issue");
-    } finally {
-      setLoading(false);
+    } else {
+      setError(data.message || "Invalid OTP");
     }
-  };
+  } catch (err) {
+    setError("Server connection issue");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <main className="bg-black text-white min-h-screen flex items-center justify-center px-4">
