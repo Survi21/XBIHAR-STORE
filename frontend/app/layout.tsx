@@ -31,12 +31,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// export const metadata: Metadata = {
-//   title: "XBIHAR",
-//   description: "Crafted in Pride",
-// };
-
-
 export const metadata: Metadata = {
   title: "XBIHAR",
   description: "Crafted in Pride",
@@ -49,46 +43,6 @@ export const viewport = {
   maximumScale: 1,
   userScalable: false,
 };
-
-// export default function RootLayout({
-//   children,
-// }: {
-//   children: React.ReactNode;
-// }) {
-//   return (
-//     <html lang="en" className="h-full antialiased">
-//       <body className="min-h-full flex flex-col bg-black text-white">
-
-//         <GoogleOAuthProvider clientId="754775338125-o0jqgikp1bvdse7ugerna931a0mv3a7p.apps.googleusercontent.com">
-
-//           <CartProvider>
-//             <WishlistProvider>
-//               {children}
-//             </WishlistProvider>
-//           </CartProvider>
-
-//         </GoogleOAuthProvider>
-
-//       </body>
-//     </html>
-//   );
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 export default function RootLayout({
   children,
