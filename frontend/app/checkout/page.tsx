@@ -329,7 +329,7 @@ try {
         <h1 className="text-4xl font-orbitron mb-12">CHECKOUT</h1>
         <div className="grid md:grid-cols-2 gap-12">
           {/* LEFT FORM */}
-          <div className="space-y-6">
+          <div className="space-y-6 font-['Inter'] ">
             <input placeholder="Full Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
             <input placeholder="Phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
             <input placeholder="Email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
@@ -355,7 +355,7 @@ try {
             <h2 className="text-2xl font-orbitron mb-6">ORDER SUMMARY</h2>
             <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
               {cart.map((item, index) => (
-                <div key={item.id + "-" + index} className="flex justify-between text-zinc-300">
+                <div key={item.id + "-" + index} className="flex justify-between text-zinc-300 font-['Inter'] ">
                   <p>{item.title} x {item.quantity}</p>
                   <p>₹{item.price * item.quantity}</p>
                 </div>
@@ -363,12 +363,12 @@ try {
             </div>
 
             <div className="mt-6 border-t border-zinc-800 pt-4 space-y-3 text-zinc-400">
-              <div className="flex justify-between">
+              <div className="flex justify-between font-['Inter']">
                 <p>Subtotal</p>
                 <p>₹{totalPrice}</p>
               </div>
               {couponDiscount > 0 && (
-                <div className="flex justify-between text-red-400">
+                <div className="flex justify-between text-red-400 font-['Inter']">
                   <p>Coupon Discount</p>
                   <p>-₹{couponDiscount}</p>
                 </div>
