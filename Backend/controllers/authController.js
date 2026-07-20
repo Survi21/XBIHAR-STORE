@@ -1178,7 +1178,8 @@ exports.googleLogin = async (req, res) => {
 
     res.cookie("token", jwtToken, {
       httpOnly: true,
-      sameSite: "none",
+      // sameSite: "none",
+        sameSite: "lax",
       secure: true,
     });
     res.json({ success: true, user });
@@ -1235,7 +1236,7 @@ exports.verifyOTP = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       sameSite: "lax",
-      sameSite: "none",
+      // sameSite: "none",
       secure: true,
     });
     res.json({ success: true });
