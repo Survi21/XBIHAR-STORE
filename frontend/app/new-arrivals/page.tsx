@@ -29,7 +29,7 @@ export default function NewArrivalsPage() {
         className="absolute inset-0 w-full h-full object-cover z-0"
       >
         {/* Yeh sirf mobile browser par chalegi (Max width 767px) */}
-        <source src="/coming-soon-mobile.mp4" type="video/mp4" media="(max-width: 767px)" />
+        <source src="/coming-soon-mobile.MP4" type="video/MPgit add .4" media="(max-width: 767px)" />
         
         {/* Yeh laptop aur tablet par chalegi (Min width 768px) */}
         <source src="/coming-soon.mp4" type="video/mp4" media="(min-width: 768px)" />
