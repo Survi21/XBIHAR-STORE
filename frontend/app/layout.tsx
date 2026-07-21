@@ -112,6 +112,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "XBIHAR",
   description: "Crafted in Pride",
+  icons: {
+    icon: "/icon.png.PNG",
+  },
 };
 
 // 🌟 NAYA FORCED VIEWPORT ENGINE: Jo mobile phone par website ko zoom hone ya text ko cutne se rokega
