@@ -305,7 +305,7 @@ export default function OrdersPage() {
   // LOADING STATE
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white bg-black font-mono tracking-widest animate-pulse">
+      <div className=" font-orbitron min-h-screen flex items-center justify-center text-white bg-black font-mono tracking-widest animate-pulse">
         LOADING ORDERS MATRIX...
       </div>
     );
@@ -332,7 +332,7 @@ export default function OrdersPage() {
           <h1 className="text-3xl font-bold uppercase font-orbitron text-white">
             MY ORDERS
           </h1>
-          <p className="text-zinc-500 text-sm mt-1">
+          <p className="font-['Inter'] text-zinc-500 text-sm mt-1">
             Logged in as: <span className="text-zinc-300 font-['Inter']">{user.email || user.name}</span>
           </p>
         </div>
@@ -343,12 +343,12 @@ export default function OrdersPage() {
             <h2 className="text-2xl font-['Inter'] mb-2">
               👋 Welcome, {user.name || user.email?.split("@")[0] || "User"}
             </h2>
-            <p className="text-zinc-500 max-w-sm mb-8 text-sm">
+            <p className="text-zinc-500 max-w-sm mb-8 text-sm font-['Inter']">
               Your order timeline is empty. Looks like you haven't secured any drops yet.
             </p>
             <button
               onClick={() => router.push("/")}
-              className="bg-white text-black font-mono font-bold text-sm px-8 py-3.5 rounded-xl hover:bg-zinc-200 transition active:scale-95"
+              className="font-orbitron bg-white text-black font-mono font-bold text-sm px-8 py-3.5 rounded-xl hover:bg-zinc-200 transition active:scale-95"
             >
               SHOP THE DROP
             </button>
