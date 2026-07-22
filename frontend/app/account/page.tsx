@@ -181,20 +181,20 @@ export default function AccountPage() {
           MY ACCOUNT
         </h1>
 
-        <div className="bg-zinc-900 p-8 rounded-xl">
+        <div className="bg-zinc-900 p-8 rounded-xl  ">
 
-          <h2 className="text-2xl mb-6">
+          <h2 className="text-2xl mb-6  font-orbitron">
             Profile Information
           </h2>
 
-          <p>Name: {user.name}</p>
-          <p>Email: {user.email}</p>
-          <p>Role: {user.role}</p>
+          <p className=" font-['Inter']">Name: {user.name}</p>
+          <p className=" font-['Inter']">Email: {user.email}</p>
+          <p className=" font-['Inter']">Role: {user.role}</p>
 
           <div className="mt-6 space-y-4">
             <button
               onClick={() => router.push("/orders")}
-              className="w-full bg-white text-black py-2 rounded"
+              className="w-full bg-white text-black py-2 rounded font-orbitron text-sm transition"
             >
               My Orders
             </button>
@@ -218,7 +218,7 @@ export default function AccountPage() {
               localStorage.removeItem("user");
               router.push("/login");
             }}
-            className="mt-6 bg-red-600 px-5 py-2"
+            className="mt-6 bg-red-600 px-5 py-2 font-orbitron text-sm transition"
           >
             Logout
           </button>

@@ -377,7 +377,7 @@ try {
               <div className="flex justify-between">
                 <p>Delivery Charges</p>
                 {/* 🎯 FIX 2: Ab cart page ka calculated dynamic rate bina delee ke turant yahan load ho jayega */}
-                <p className="text-green-400 font-bold">{deliveryCharge > 0 ? `₹${deliveryCharge}` : "Enter pincode"}</p>
+                <p className="text-green-400 font-['Inter']">{deliveryCharge > 0 ? `₹${deliveryCharge}` : "Enter pincode"}</p>
               </div>
               <hr className="border-zinc-800 my-2" />
               <div className="flex justify-between font-orbitron text-white text-xl font-bold">
