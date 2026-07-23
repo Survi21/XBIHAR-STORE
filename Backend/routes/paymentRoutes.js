@@ -96,17 +96,16 @@ const router = express.Router();
 const { Cashfree, CFEnvironment } = require("cashfree-pg");
 
 // 🔑 CASHFREE CONFIGURATION SETUP (v6 SDK ka tarika)
+
+
 // const cashfree = new Cashfree(
 //   CFEnvironment.PRODUCTION,
-//   process.env.CASHFREE_CLIENT_ID,
+//   process.env.CASHFREE_APP_ID,      // 👈 CASHFREE_CLIENT_ID ki jagah ye
 //   process.env.CASHFREE_SECRET_KEY
 // );
 
-const cashfree = new Cashfree(
-  CFEnvironment.PRODUCTION,
-  process.env.CASHFREE_APP_ID,      // 👈 CASHFREE_CLIENT_ID ki jagah ye
-  process.env.CASHFREE_SECRET_KEY
-);
+
+
 // 💳 Checkout Route (Cashfree Version)
 router.post("/checkout", async (req, res) => {
   try {
