@@ -812,7 +812,8 @@ export default function CheckoutPage() {
           customerName: formData.name,
           customerPhone: formData.phone,
           customerEmail: formData.email || "customer@xbihar.com",
-          returnUrl: "https://xbihar.com/orders?order_id={order_id}", // 🚨 404 Fix
+          returnUrl: "https://xbihar.com/success?order_id={order_id}",
+          // returnUrl: "https://xbihar.com/orders?order_id={order_id}", // 🚨 404 Fix
         }),
       });
 
