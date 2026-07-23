@@ -140,97 +140,108 @@ const checkAuth = async () => {
       size: item.size,
     }));
 
-  //   try {
-  //     // 💳 Step A: Backend se Razorpay Order ID generate karwana
-  //     const checkoutRes = await fetch("https://xbihar.onrender.com/api/payment/checkout", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ amount: finalTotal }),
-  //     });
 
-  //     const checkoutData = await checkoutRes.json();
-  //     if (!checkoutData.success) {
-  //       alert("❌ Razorpay order generation failed!");
-  //       setIsPaying(false);
-  //       return;
-  //     }
 
-  //     // 💳 Step B: Razorpay ka configuration setup
-  //     const options = {
-  //       key: "rzp_test_T78UJUOjZNbRW9", // 👈 Apni rzp_test_... key lagayein
-  //       amount: checkoutData.amount,
-  //       currency: "INR",
-  //       name: "XBIHAR",
-  //       description: "Streetwear Premium Drop",
-  //       order_id: checkoutData.orderId,
-  //       handler: async function (response: any) {
-  //         // 🎯 Yeh function tabhi chalega jab customer real payment pass kar dega
-  //         try {
-  //           const orderResponse = await fetch("https://xbihar.onrender.com/api/orders", {
-  //             method: "POST",
-  //             credentials: "include",
-  //             headers: { "Content-Type": "application/json" },
-  //             body: JSON.stringify({
-  //               name: formData.name,
-  //               email: formData.email,
-  //               phone: formData.phone,
-  //               shippingCharge: deliveryCharge,
-  //               shippingAddress: {
-  //                 address: formData.address,
-  //                 city: formData.city,
-  //                 state: formData.state,
-  //                 pincode: formData.pincode,
-  //               },
-  //               totalPrice: finalTotal,
-  //               products: productsData,
-  //               razorpayPaymentId: response.razorpay_payment_id, // 👈 Payment Proof pass kiya
-  //             }),
-  //           });
 
-  //           const orderData = await orderResponse.json();
-  //           if (orderData.success) {
-  //             alert("🎉 Payment Successful & Order Placed!");
-  //             localStorage.removeItem("cartSummary");
-  //             router.push("/orders/success"); // Agar success page banaya hai toh wahan bhej do
-  //           } else {
-  //             alert("❌ Payment done but order logging failed: " + orderData.error);
-  //           }
-  //         } catch (err) {
-  //           console.error(err);
-  //           alert("❌ Network issue while saving order details.");
-  //         } finally {
-  //           setIsPaying(false);
-  //         }
-  //       },
-  //       prefill: {
-  //         name: formData.name,
-  //         email: formData.email || "customer@xbihar.com",
-  //         contact: formData.phone,
-  //       },
-  //       theme: { color: "#000000" }, // Black theme for streetwear vibe
-  //       modal: {
-  //         ondismiss: function () {
-  //           setIsPaying(false); // User ne popup manually kaat diya
-  //         }
-  //       }
-  //     };
+// try {
+//       // 💳 Step A: Backend se Cashfree Session ID generate karwana
+//       const checkoutRes = await fetch("https://xbihar.onrender.com/api/payment/checkout", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ 
+//           amount: finalTotal,
+//           customerPhone: formData.phone,
+//           customerEmail: formData.email || "customer@xbihar.com",
+//         }),
+//       });
 
-  //     const rzp = new (window as any).Razorpay(options);
-  //     rzp.open();
+//       const checkoutData = await checkoutRes.json();
+//       if (!checkoutData.success || !checkoutData.paymentSessionId) {
+//         alert("❌ Cashfree order generation failed!");
+//         setIsPaying(false);
+//         return;
+//       }
 
-  //   } catch (error) {
-  //     console.log(error);
-  //     alert("❌ Could not connect to payment gateway.");
-  //     setIsPaying(false);
-  //   }
-  // };
+//       // 💳 Step B: Cashfree runtime engine initialize karna
+//       const cashfree = new (window as any).Cashfree({
+//         mode: "production", // 🌟 Note: Live/Real payment chalu karne ke liye yahan "production" kar dena
+//       });
+
+//       // 💳 Step C: Cashfree modal popup settings
+//       let checkoutOptions = {
+//         paymentSessionId: checkoutData.paymentSessionId,
+//         redirectTarget: "_self", 
+//       };
+
+//       cashfree.checkout(checkoutOptions).then(async (result: any) => {
+//         if (result.error) {
+//           alert("❌ Payment Failed or Cancelled: " + result.error.message);
+//           setIsPaying(false);
+//           return;
+//         }
+        
+//         // Jab customer payment successfully kar deta hai
+//         if (result.redirect) {
+//           try {
+//             const token = localStorage.getItem("token");
+//             const orderResponse = await fetch("https://xbihar.onrender.com/api/orders", {
+//               method: "POST",
+//               // credentials: "include",
+//               // headers: { "Content-Type": "application/json" },
+//               // body: JSON.stringify({
+//                 headers: {
+//     "Content-Type": "application/json",
+//     Authorization: `Bearer ${token}`,
+//   },
+//   body: JSON.stringify({
+//                 name: formData.name,
+//                 email: formData.email,
+//                 phone: formData.phone,
+//                 shippingCharge: deliveryCharge,
+//                 shippingAddress: {
+//                   address: formData.address,
+//                   city: formData.city,
+//                   state: formData.state,
+//                   pincode: formData.pincode,
+//                 },
+//                 totalPrice: finalTotal,
+//                 products: productsData,
+//                 cashfreeOrderId: checkoutData.orderId, 
+//               }),
+//             });
+
+//             const orderData = await orderResponse.json();
+//             if (orderData.success) {
+//               alert("🎉 Payment Successful & Order Placed!");
+//               localStorage.removeItem("cartSummary");
+//               router.push("/orders/success");
+//             } else {
+//               alert("❌ Order logging failed: " + orderData.error);
+//             }
+//           } catch (err) {
+//             console.error(err);
+//             alert("❌ Network issue while saving order details.");
+//           } finally {
+//             setIsPaying(false);
+//           }
+//         }
+//       });
+
+//     } catch (error) {
+//       console.log(error);
+//       alert("❌ Could not connect to Cashfree payment gateway.");
+//       setIsPaying(false);
+//     }
+//   };
+
+
 
 try {
-      // 💳 Step A: Backend se Cashfree Session ID generate karwana
+      // Step A: Backend se Cashfree Session ID generate karwana
       const checkoutRes = await fetch("https://xbihar.onrender.com/api/payment/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           amount: finalTotal,
           customerPhone: formData.phone,
           customerEmail: formData.email || "customer@xbihar.com",
@@ -244,69 +255,31 @@ try {
         return;
       }
 
-      // 💳 Step B: Cashfree runtime engine initialize karna
+      // 🆕 Step B: Page redirect hone se PEHLE, order banane ka data localStorage mein save karo
+      localStorage.setItem("pendingOrderData", JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        shippingCharge: deliveryCharge,
+        shippingAddress: {
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+        },
+        totalPrice: finalTotal,
+        products: productsData,
+        cashfreeOrderId: checkoutData.orderId,
+      }));
+
+      // Step C: Cashfree checkout kholo — is baad koi code nahi chalega, page navigate ho jayega
       const cashfree = new (window as any).Cashfree({
-        mode: "production", // 🌟 Note: Live/Real payment chalu karne ke liye yahan "production" kar dena
+        mode: "production",
       });
 
-      // 💳 Step C: Cashfree modal popup settings
-      let checkoutOptions = {
+      cashfree.checkout({
         paymentSessionId: checkoutData.paymentSessionId,
-        redirectTarget: "_self", 
-      };
-
-      cashfree.checkout(checkoutOptions).then(async (result: any) => {
-        if (result.error) {
-          alert("❌ Payment Failed or Cancelled: " + result.error.message);
-          setIsPaying(false);
-          return;
-        }
-        
-        // Jab customer payment successfully kar deta hai
-        if (result.redirect) {
-          try {
-            const token = localStorage.getItem("token");
-            const orderResponse = await fetch("https://xbihar.onrender.com/api/orders", {
-              method: "POST",
-              // credentials: "include",
-              // headers: { "Content-Type": "application/json" },
-              // body: JSON.stringify({
-                headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  },
-  body: JSON.stringify({
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone,
-                shippingCharge: deliveryCharge,
-                shippingAddress: {
-                  address: formData.address,
-                  city: formData.city,
-                  state: formData.state,
-                  pincode: formData.pincode,
-                },
-                totalPrice: finalTotal,
-                products: productsData,
-                cashfreeOrderId: checkoutData.orderId, 
-              }),
-            });
-
-            const orderData = await orderResponse.json();
-            if (orderData.success) {
-              alert("🎉 Payment Successful & Order Placed!");
-              localStorage.removeItem("cartSummary");
-              router.push("/orders/success");
-            } else {
-              alert("❌ Order logging failed: " + orderData.error);
-            }
-          } catch (err) {
-            console.error(err);
-            alert("❌ Network issue while saving order details.");
-          } finally {
-            setIsPaying(false);
-          }
-        }
+        redirectTarget: "_self",
       });
 
     } catch (error) {
@@ -315,7 +288,6 @@ try {
       setIsPaying(false);
     }
   };
-
 
 
 
