@@ -645,9 +645,11 @@
 
 
 
+
+
 const Order = require("../models/Order");
 const User = require("../models/User");
-const axios = require("axios"); // ⚡ Cashfree API status verification ke liye
+const axios = require("axios"); // Cashfree API verification
 const { getCourierRates } = require("../services/shiprocketRates");
 const { Resend } = require("resend");
 const { createShiprocketOrder } = require("../services/shiprocketService");
@@ -655,7 +657,14 @@ const { createShiprocketOrder } = require("../services/shiprocketService");
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SENDER_EMAIL = "XBIHAR <otp@xbihar.com>";
 
-// 🔥 PINCODE AND WEIGHT BASED LIVE DELIVERY CHARGE CALCULATOR
+// Helper: Extra suffixes (jaise "-L-0") ko hata kar clean 24-char Mongo ObjectId nikalna
+const getCleanObjectId = (id) => {
+  if (!id) return null;
+  const strId = String(id);
+  return strId.includes("-") ? strId.split("-")[0] : strId;
+};
+
+// 🔥 1. LIVE DELIVERY CHARGE CALCULATOR
 exports.calculateLiveShipping = async (req, res) => {
   try {
     const { pincode, weight } = req.body;
@@ -685,7 +694,7 @@ exports.calculateLiveShipping = async (req, res) => {
   }
 };
 
-// ✅ CREATE ORDER ROUTE (Saves order right after successful payment callback)
+// ✅ 2. CREATE ORDER ROUTE (Direct logging after payment)
 exports.createOrder = async (req, res) => {
   try {
     if (!req.user) {
@@ -701,7 +710,7 @@ exports.createOrder = async (req, res) => {
 
     const cfOrderId = req.body.cashfreeOrderId || req.body.cfOrderId || req.body.orderId;
 
-    // 🚨 DUPLICATE GUARD: Agar order pehle se database mein hai toh dobara mat banao
+    // DUPLICATE GUARD
     if (cfOrderId) {
       let existingOrder = await Order.findOne({ cfOrderId });
       if (existingOrder) {
@@ -713,7 +722,7 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    // Direct database entry with marked status 'Paid'
+    // Direct database entry
     const order = await Order.create({
       user: user._id,
       name: req.body.name || user.name,
@@ -721,7 +730,7 @@ exports.createOrder = async (req, res) => {
       deliveryPhone: req.body.phone || user.phone,
       shippingCharge: req.body.shippingCharge || 0,
       totalPrice: req.body.totalPrice,
-      paymentStatus: "Paid", // Confirmed payment mark
+      paymentStatus: "Paid",
       cfOrderId: cfOrderId,
 
       shippingAddress: {
@@ -732,15 +741,19 @@ exports.createOrder = async (req, res) => {
       },
       shippingAddressPincode: req.body.shippingAddress?.pincode || req.body.pincode,
 
-      products: (req.body.products || []).map((p) => ({
-        product: p.productId,
-        productId: p.productId,
-        title: p.title,
-        price: p.price,
-        image: p.image,
-        quantity: p.quantity,
-        size: p.size,
-      })),
+      // 🚨 FIX: Extract clean Mongo ObjectId from productId (fixes Cast to ObjectId error)
+      products: (req.body.products || []).map((p) => {
+        const cleanId = getCleanObjectId(p.productId || p.product);
+        return {
+          product: cleanId,
+          productId: cleanId,
+          title: p.title,
+          price: p.price,
+          image: p.image,
+          quantity: p.quantity,
+          size: p.size,
+        };
+      }),
     });
 
     // 🚀 SHIPROCKET SYNCHRONIZATION
@@ -756,7 +769,7 @@ exports.createOrder = async (req, res) => {
       console.log("❌ Shiprocket Sync Warning:", srErr.message);
     }
 
-    // 📧 ORDER CONFIRMATION EMAIL (Resend)
+    // 📧 ORDER CONFIRMATION EMAIL
     try {
       await resend.emails.send({
         from: SENDER_EMAIL,
@@ -792,10 +805,9 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// ✅ STEP 2: BACKUP PAYMENT VERIFICATION (BULLETPROOF CASHFREE CHECK)
+// ✅ 3. BACKUP PAYMENT VERIFICATION
 exports.verifyPayment = async (req, res) => {
   try {
-    // Frontend se aane wale kisi bhi key (orderId / cashfreeOrderId / cfOrderId) ko support karega
     const cfOrderId = req.body.orderId || req.body.cashfreeOrderId || req.body.cfOrderId;
 
     if (!cfOrderId) {
@@ -804,7 +816,6 @@ exports.verifyPayment = async (req, res) => {
 
     const cashfreeEnv = process.env.CASHFREE_ENV === "production" ? "api" : "sandbox";
 
-    // Cashfree official API verification
     const verifyRes = await axios.get(
       `https://${cashfreeEnv}.cashfree.com/pg/orders/${cfOrderId}`,
       {
@@ -842,92 +853,12 @@ exports.verifyPayment = async (req, res) => {
   }
 };
 
-// ✅ GET LOGGED-IN USER'S ORDERS
-exports.getMyOrders = async (req, res) => {
-  try {
-    const orders = await Order.find({ user: req.user.id || req.user._id }).sort({ createdAt: -1 });
-    res.json({ success: true, orders });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// ✅ GET SINGLE ORDER BY ID
-exports.getOrderById = async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
-    res.json(order);
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// ✅ ADMIN: GET ALL ORDERS
-exports.getAllOrders = async (req, res) => {
-  try {
-    const orders = await Order.find().sort({ createdAt: -1 });
-    res.json(orders);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-
-
-// ✅ ADMIN: UPDATE ORDER STATUS
-exports.updateOrderStatus = async (req, res) => {
-  try {
-    const { orderStatus } = req.body;
-    const order = await Order.findByIdAndUpdate(req.params.id, { orderStatus }, { new: true });
-    if (!order) return res.status(404).json({ message: "Order not found" });
-
-    res.json(order);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// ✅ ADMIN: UPDATE ORDER STATUS (+ notify customer via email)
-// exports.updateOrderStatus = async (req, res) => {
-//   try {
-//     const { orderStatus } = req.body;
-//     const order = await Order.findByIdAndUpdate(req.params.id, { orderStatus }, { new: true });
-//     if (!order) return res.status(404).json({ message: "Order not found" });
-
-//     // 📧 STATUS UPDATE EMAIL (Resend)
-//     try {
-//       await resend.emails.send({
-//         from: SENDER_EMAIL,
-//         to: order.email,
-//         subject: `Order Update: ${orderStatus} - #${order._id.toString().substring(0, 8)}`,
-//         html: `
-//           <div style="background-color: #000; color: #fff; padding: 30px; font-family: sans-serif; max-width: 600px; border: 1px solid #222;">
-//             <h2 style="text-transform: uppercase;">Order Status: ${orderStatus}</h2>
-//             <p>Hi ${order.name},</p>
-//             <p>Your order <strong>#${order._id.toString().substring(0, 8)}</strong> is now: <strong>${orderStatus}</strong></p>
-//             ${order.trackingUrl ? `<p><a href="${order.trackingUrl}" style="color: #ff5555;">Track your shipment here</a></p>` : ""}
-//           </div>
-//         `,
-//       });
-//       console.log("✅ STATUS UPDATE EMAIL SENT");
-//     } catch (mailErr) {
-//       console.log("❌ Status Update Email Error:", mailErr.message);
-//     }
-
-//     res.json(order);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-
-// 🆕 NAYA FUNCTION — payment verify karke order banata hai
+// ✅ 4. VERIFY & AUTO-CREATE ORDER (Redirect Handler)
 exports.verifyAndCreateOrder = async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ success: false, message: "Login required" });
 
-    const cfOrderId = req.body.cashfreeOrderId;
+    const cfOrderId = req.body.cashfreeOrderId || req.body.cfOrderId || req.body.orderId;
     if (!cfOrderId) return res.status(400).json({ success: false, message: "cashfreeOrderId required" });
 
     const existing = await Order.findOne({ cfOrderId });
@@ -956,29 +887,34 @@ exports.verifyAndCreateOrder = async (req, res) => {
 
     const order = await Order.create({
       user: user._id,
-      name: req.body.name,
-      email: req.body.email,
-      deliveryPhone: req.body.phone,
-      shippingCharge: req.body.shippingCharge,
+      name: req.body.name || user.name,
+      email: req.body.email || user.email,
+      deliveryPhone: req.body.phone || user.phone,
+      shippingCharge: req.body.shippingCharge || 0,
       totalPrice: req.body.totalPrice,
       paymentStatus: "Paid",
       cfOrderId,
       shippingAddress: {
-        address: req.body.shippingAddress?.address,
-        city: req.body.shippingAddress?.city,
-        state: req.body.shippingAddress?.state,
-        pincode: req.body.shippingAddress?.pincode,
+        address: req.body.shippingAddress?.address || req.body.address,
+        city: req.body.shippingAddress?.city || req.body.city,
+        state: req.body.shippingAddress?.state || req.body.state,
+        pincode: req.body.shippingAddress?.pincode || req.body.pincode,
       },
-      shippingAddressPincode: req.body.shippingAddress?.pincode,
-      products: req.body.products.map((p) => ({
-        product: p.productId,
-        productId: p.productId,
-        title: p.title,
-        price: p.price,
-        image: p.image,
-        quantity: p.quantity,
-        size: p.size,
-      })),
+      shippingAddressPincode: req.body.shippingAddress?.pincode || req.body.pincode,
+
+      // 🚨 FIX: Extract clean Mongo ObjectId from productId
+      products: (req.body.products || []).map((p) => {
+        const cleanId = getCleanObjectId(p.productId || p.product);
+        return {
+          product: cleanId,
+          productId: cleanId,
+          title: p.title,
+          price: p.price,
+          image: p.image,
+          quantity: p.quantity,
+          size: p.size,
+        };
+      }),
     });
 
     let shiprocketRes = null;
@@ -1010,12 +946,75 @@ exports.verifyAndCreateOrder = async (req, res) => {
         `,
       });
     } catch (mailErr) {
-      console.log("❌ Email Error:", mailErr);
+      console.log("❌ Email Error:", mailErr.message);
     }
 
     return res.status(201).json({ success: true, order, shiprocket: shiprocketRes });
   } catch (error) {
     console.log("❌ VERIFY & CREATE ORDER ERROR:", error.response?.data || error.message);
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ✅ 5. GET LOGGED-IN USER'S ORDERS
+exports.getMyOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user.id || req.user._id }).sort({ createdAt: -1 });
+    res.json({ success: true, orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ✅ 6. GET SINGLE ORDER BY ID
+exports.getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ✅ 7. ADMIN: GET ALL ORDERS
+exports.getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ✅ 8. ADMIN: UPDATE ORDER STATUS
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { orderStatus } = req.body;
+    const order = await Order.findByIdAndUpdate(req.params.id, { orderStatus }, { new: true });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    // Optional Status Update Email
+    try {
+      await resend.emails.send({
+        from: SENDER_EMAIL,
+        to: order.email,
+        subject: `Order Update: ${orderStatus} - #${order._id.toString().substring(0, 8)}`,
+        html: `
+          <div style="background-color: #000; color: #fff; padding: 30px; font-family: sans-serif; max-width: 600px; border: 1px solid #222;">
+            <h2 style="text-transform: uppercase;">Order Status: ${orderStatus}</h2>
+            <p>Hi ${order.name},</p>
+            <p>Your order <strong>#${order._id.toString().substring(0, 8)}</strong> status is now: <strong>${orderStatus}</strong></p>
+            ${order.trackingUrl ? `<p><a href="${order.trackingUrl}" style="color: #ff5555;">Track your shipment here</a></p>` : ""}
+          </div>
+        `,
+      });
+    } catch (mailErr) {
+      console.log("❌ Status Update Email Warning:", mailErr.message);
+    }
+
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
