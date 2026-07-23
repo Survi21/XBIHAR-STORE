@@ -873,6 +873,21 @@ exports.getAllOrders = async (req, res) => {
   }
 };
 
+
+
+// ✅ ADMIN: UPDATE ORDER STATUS
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { orderStatus } = req.body;
+    const order = await Order.findByIdAndUpdate(req.params.id, { orderStatus }, { new: true });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // ✅ ADMIN: UPDATE ORDER STATUS (+ notify customer via email)
 // exports.updateOrderStatus = async (req, res) => {
 //   try {

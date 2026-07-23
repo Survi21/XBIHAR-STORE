@@ -65,6 +65,10 @@
 
 
 // module.exports = router;
+
+
+
+
 const express = require("express");
 const router = express.Router();
 
@@ -80,29 +84,46 @@ const {
   getMyOrders,
   getOrderById,
   getAllOrders,
-  updateOrderStatus,
+  updateOrderStatus, // 👈 Make sure ye controller mein exported ho
 } = require("../controllers/orderController");
 
 // 1. Create Normal Order
 router.post("/", protect, createOrder);
 
-// 2. Cashfree Payment Verify & Auto Order Creation (⭐️ Main Fix)
+// 2. Payment Verify & Auto Order Creation
 router.post("/verify", protect, verifyAndCreateOrder);
-router.post("/verify-and-create", protect, verifyAndCreateOrder); // Backup alias
+router.post("/verify-and-create", protect, verifyAndCreateOrder);
 
 // 3. User Orders & Specific Order Fetching
 router.get("/myorders", protect, getMyOrders);
 router.get("/:id", protect, getOrderById);
 
 // 4. Admin Routes
-router.get("/admin", protect, admin, getAllOrders);
-router.put("/:id/status", protect, admin, updateOrderStatus);
+if (getAllOrders) {
+  router.get("/admin", protect, admin, getAllOrders);
+}
+
+// 🚨 Main Fix: Safeguard check taaki undefined handler ki wajah se app crash na ho
+if (typeof updateOrderStatus === "function") {
+  router.put("/:id/status", protect, admin, updateOrderStatus);
+} else {
+  router.put("/:id/status", protect, admin, (req, res) => {
+    res.status(500).json({ message: "updateOrderStatus function missing in controller" });
+  });
+}
 
 // 5. Shipping Rates Route
 router.post("/shipping/rates", async (req, res) => {
-  const { pincode } = req.body;
-  const result = await getCourierRates(pincode);
-  res.json(result);
+  try {
+    const { pincode } = req.body;
+    const result = await getCourierRates(pincode);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
+
+
+
 
 module.exports = router;
