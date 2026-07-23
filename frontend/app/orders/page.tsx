@@ -748,27 +748,18 @@
 
 
 
-
-
-
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
 
-// Live tracking ke standard states
 const TRACKING_STEPS = ["Processing", "Shipped", "Out for Delivery", "Delivered"];
 
-export default function OrdersPage() {
+function OrdersContent() {
   const [orders, setOrders] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [verifying, setVerifying] = useState(false);
-  const [paymentMsg, setPaymentMsg] = useState("");
-
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const orderIdFromUrl = searchParams.get("order_id");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -777,59 +768,15 @@ export default function OrdersPage() {
       return;
     }
 
-    // 1. FETCH USER PROFILE
     fetch("https://xbihar.onrender.com/api/auth/profile", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.user) {
-          setUser(data.user);
-        }
+        setUser(data.user);
       })
       .catch((err) => console.log("Profile load failed", err));
 
-    // 2. CASHFREE PAYMENT AUTO-VERIFY & ORDER CREATION
-    if (orderIdFromUrl) {
-      setVerifying(true);
-      const pendingData = JSON.parse(localStorage.getItem("pendingOrderData") || "{}");
-
-      // 🚨 FIX: Hits /api/orders/verify with full order data from localStorage
-      fetch("https://xbihar.onrender.com/api/orders/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ...pendingData,
-          cashfreeOrderId: orderIdFromUrl,
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setPaymentMsg("🎉 Payment Verified & Order Placed Successfully!");
-            localStorage.removeItem("pendingOrderData");
-            localStorage.removeItem("cartSummary");
-          } else {
-            console.log("Verification notice:", data.message);
-          }
-        })
-        .catch((err) => console.log("Verification error:", err))
-        .finally(() => {
-          setVerifying(false);
-          // Clean query params from URL without refreshing
-          router.replace("/orders");
-          fetchMyOrders(token);
-        });
-    } else {
-      fetchMyOrders(token);
-    }
-  }, [orderIdFromUrl]);
-
-  // Helper to fetch orders
-  const fetchMyOrders = (token: string) => {
     fetch("https://xbihar.onrender.com/api/orders/myorders", {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -843,36 +790,27 @@ export default function OrdersPage() {
       })
       .catch((err) => console.log("Orders load failed", err))
       .finally(() => setLoading(false));
-  };
+  }, []);
 
-  // Helper for tracking index
   const getStepIndex = (status: string) => {
     const currentStatus = status || "Processing";
     const idx = TRACKING_STEPS.indexOf(currentStatus);
     return idx !== -1 ? idx : 0;
   };
 
-  // LOADING / VERIFYING STATE
-  if (loading || verifying) {
+  if (loading) {
     return (
-      <div className="font-orbitron min-h-screen flex flex-col items-center justify-center text-white bg-black font-mono tracking-widest animate-pulse p-4 text-center">
-        <p className="text-xl mb-2">
-          {verifying ? "VERIFYING CASHFREE PAYMENT..." : "LOADING ORDERS MATRIX..."}
-        </p>
-        <p className="text-xs text-zinc-500 font-sans">Please do not refresh or close the page.</p>
+      <div className="min-h-screen flex items-center justify-center text-white bg-black font-mono tracking-widest animate-pulse">
+        LOADING ORDERS MATRIX...
       </div>
     );
   }
 
-  // AUTH PROTECT SAFEGUARD
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-white bg-black font-mono p-4 text-center">
-        <p className="text-zinc-500 mb-4 font-['Inter']">Please log in to view your orders.</p>
-        <button
-          onClick={() => router.push("/login")}
-          className="bg-white text-black px-6 py-2 rounded font-bold font-orbitron hover:bg-zinc-200 transition"
-        >
+        <p className="text-zinc-500 mb-4">Please log in to view your orders.</p>
+        <button onClick={() => router.push("/login")} className="bg-white text-black px-6 py-2 rounded font-bold">
           GO TO LOGIN
         </button>
       </div>
@@ -882,42 +820,32 @@ export default function OrdersPage() {
   return (
     <div className="bg-black text-white min-h-screen font-['Inter'] p-6 md:p-12">
       <div className="max-w-4xl mx-auto">
-        
-        {/* PAYMENT SUCCESS TOAST MESSAGE */}
-        {paymentMsg && (
-          <div className="mb-6 bg-green-500/10 border border-green-500/30 text-green-400 p-4 rounded-xl text-sm font-mono text-center animate-bounce">
-            {paymentMsg}
-          </div>
-        )}
 
-        {/* HEADER */}
         <div className="border-b border-zinc-800 pb-6 mb-10">
           <h1 className="text-3xl font-bold uppercase font-orbitron text-white">
             MY ORDERS
           </h1>
-          <p className="font-['Inter'] text-zinc-500 text-sm mt-1">
-            Logged in as: <span className="text-zinc-300 font-['Inter']">{user.name || user.email}</span>
+          <p className="text-zinc-500 text-sm mt-1">
+            Logged in as: <span className="text-zinc-300 font-mono">{user.email || "Survi"}</span>
           </p>
         </div>
 
-        {/* CASE 1: NO ORDERS */}
         {orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center border border-dashed border-zinc-800 rounded-2xl py-20 px-4 text-center">
-            <h2 className="text-2xl font-['Inter'] mb-2">
-              👋 Welcome, {user.name || user.email?.split("@")[0] || "User"}
+            <h2 className="text-2xl font-semibold mb-2">
+              👋 Welcome, {user.name || "Survi"}
             </h2>
-            <p className="text-zinc-500 max-w-sm mb-8 text-sm font-['Inter']">
+            <p className="text-zinc-500 max-w-sm mb-8 text-sm">
               Your order timeline is empty. Looks like you haven't secured any drops yet.
             </p>
             <button
               onClick={() => router.push("/")}
-              className="font-orbitron bg-white text-black font-mono font-bold text-sm px-8 py-3.5 rounded-xl hover:bg-zinc-200 transition active:scale-95"
+              className="bg-white text-black font-mono font-bold text-sm px-8 py-3.5 rounded-xl hover:bg-zinc-200 transition active:scale-95"
             >
               SHOP THE DROP
             </button>
           </div>
         ) : (
-          /* CASE 2: HAS ORDERS */
           <div className="space-y-8">
             {orders.map((order: any, i: number) => {
               const currentStep = getStepIndex(order.orderStatus);
@@ -927,7 +855,6 @@ export default function OrdersPage() {
                   key={order._id || i}
                   className="bg-zinc-950 border border-zinc-900 rounded-2xl p-6 shadow-2xl relative overflow-hidden transition hover:border-zinc-800"
                 >
-                  {/* TOP META DETAILS */}
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-900 pb-4 mb-6 text-sm">
                     <div>
                       <span className="text-zinc-500 font-mono text-xs block uppercase">Order ID</span>
@@ -939,7 +866,6 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  {/* PRODUCTS LIST */}
                   <div className="space-y-4 mb-8">
                     {order.products?.map((item: any, idx: number) => (
                       <div key={idx} className="flex items-center gap-4 bg-zinc-900/40 p-3 rounded-xl border border-zinc-900">
@@ -960,7 +886,6 @@ export default function OrdersPage() {
                     ))}
                   </div>
 
-                  {/* LIVE TIMELINE TRACK BAR */}
                   <div className="my-8 px-2">
                     <div className="relative flex justify-between items-center w-full">
                       <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-zinc-800 z-0" />
@@ -1002,16 +927,15 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  {/* LIVE COURIER / TRACKING LINK BOX */}
                   {(order.courier || order.trackingUrl) && (
                     <div className="mt-6 bg-zinc-900 border border-zinc-800/60 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
                       <div className="text-xs font-mono">
                         <span className="text-zinc-500 block">SHIPPING VIA</span>
                         <span className="text-zinc-300 uppercase font-bold">{order.courier || "Logistics Partner"}</span>
                       </div>
-                      
+
                       {order.trackingUrl && (
-                        <a
+                        
                           href={order.trackingUrl}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -1030,5 +954,17 @@ export default function OrdersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center text-white bg-black font-mono tracking-widest animate-pulse">
+        LOADING...
+      </div>
+    }>
+      <OrdersContent />
+    </Suspense>
   );
 }
