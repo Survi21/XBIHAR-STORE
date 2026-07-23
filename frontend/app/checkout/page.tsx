@@ -273,9 +273,13 @@ try {
       }));
 
       // Step C: Cashfree checkout kholo — is baad koi code nahi chalega, page navigate ho jayega
-      const cashfree = new (window as any).Cashfree({
-        mode: "production",
-      });
+      // const cashfree = new (window as any).Cashfree({
+      //   mode: "production",
+      // });
+
+const cashfree = new (window as any).Cashfree({
+  mode: "sandbox",
+});
 
       cashfree.checkout({
         paymentSessionId: checkoutData.paymentSessionId,

@@ -134,9 +134,12 @@ export default function AccountPage() {
       return;
     }
 
-    fetch("https://xbihar.onrender.com/api/auth/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    // fetch("https://xbihar.onrender.com/api/auth/me", {
+    //   headers: { Authorization: `Bearer ${token}` },
+    // })
+    fetch("https://xbihar.onrender.com/api/auth/profile", {
+  headers: { Authorization: `Bearer ${token}` },
+})
       .then((res) => {
         if (!res.ok) {
           router.push("/login");
