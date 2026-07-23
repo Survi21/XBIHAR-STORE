@@ -934,7 +934,7 @@ function OrdersContent() {
                         <span className="text-zinc-300 uppercase font-bold">{order.courier || "Logistics Partner"}</span>
                       </div>
 
-                      {order.trackingUrl && (
+                      {/* {order.trackingUrl && (
                         
                           href={order.trackingUrl}
                           target="_blank"
@@ -943,7 +943,7 @@ function OrdersContent() {
                         >
                           LIVE TRACKING ↗
                         </a>
-                      )}
+                      )} */}
                     </div>
                   )}
 
