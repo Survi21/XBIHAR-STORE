@@ -55,7 +55,7 @@
         "/products/pasulok/front.png",
         "/products/pasulok/back.png",
         "/products/pasulok/front-close.png",
-        "/products/pasulok/back-close.png",
+        "/products/pasulok/backp-close.png",
         "/products/pasulok/des.png",
       ],
     },
