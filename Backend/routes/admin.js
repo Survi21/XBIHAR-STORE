@@ -324,7 +324,7 @@ router.post("/api/admin/orders/:id/dispatch", protect, admin, async (req, res) =
 
     const mockAWB = "SR" + Math.floor(1000000000 + Math.random() * 9000000000);
 
-    order.status = "Shipped";
+    order.orderStatus = "Shipped";
     order.trackingId = mockAWB;
     await order.save();
 
@@ -344,7 +344,7 @@ router.put("/api/admin/orders/:id/status", protect, admin, async (req, res) => {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
-    order.status = req.body.status;
+    order.orderStatus = req.body.status;
     await order.save();
     return res.json({ success: true, message: "Status updated!" });
   } catch (err) {
