@@ -853,112 +853,108 @@ exports.verifyPayment = async (req, res) => {
   }
 };
 
-// // ✅ 4. VERIFY & AUTO-CREATE ORDER (Redirect Handler)
-// exports.verifyAndCreateOrder = async (req, res) => {
-//   try {
-//     if (!req.user) return res.status(401).json({ success: false, message: "Login required" });
 
-//     const cfOrderId = req.body.cashfreeOrderId || req.body.cfOrderId || req.body.orderId;
-//     if (!cfOrderId) return res.status(400).json({ success: false, message: "cashfreeOrderId required" });
+// ✅ 4. VERIFY PAYMENT & CREATE ORDER (checkout success flow ke liye)
+exports.verifyAndCreateOrder = async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ success: false, message: "Login required" });
 
-//     const existing = await Order.findOne({ cfOrderId });
-//     if (existing) {
-//       return res.status(200).json({ success: true, message: "Already recorded", order: existing });
-//     }
+    const cfOrderId = req.body.cashfreeOrderId || req.body.cfOrderId || req.body.orderId;
+    if (!cfOrderId) return res.status(400).json({ success: false, message: "cashfreeOrderId required" });
 
-//     const cashfreeEnv = process.env.CASHFREE_ENV === "production" ? "api" : "sandbox";
-//     const verifyRes = await axios.get(
-//       `https://${cashfreeEnv}.cashfree.com/pg/orders/${cfOrderId}`,
-//       {
-//         headers: {
-//           "x-client-id": process.env.CASHFREE_APP_ID,
-//           "x-client-secret": process.env.CASHFREE_SECRET_KEY,
-//           "x-api-version": "2023-08-01",
-//         },
-//       }
-//     );
+    const existing = await Order.findOne({ cfOrderId });
+    if (existing) {
+      return res.status(200).json({ success: true, message: "Already recorded", order: existing });
+    }
 
-//     if (verifyRes.data.order_status !== "PAID") {
-//       return res.status(400).json({ success: false, message: "Payment not completed yet" });
-//     }
+    const cashfreeEnv = process.env.CASHFREE_ENV === "production" ? "api" : "sandbox";
+    const verifyRes = await axios.get(
+      `https://${cashfreeEnv}.cashfree.com/pg/orders/${cfOrderId}`,
+      {
+        headers: {
+          "x-client-id": process.env.CASHFREE_APP_ID,
+          "x-client-secret": process.env.CASHFREE_SECRET_KEY,
+          "x-api-version": "2023-08-01",
+        },
+      }
+    );
 
-//     const user = await User.findById(req.user._id || req.user.id);
-//     if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (verifyRes.data.order_status !== "PAID") {
+      return res.status(400).json({ success: false, message: "Payment not completed yet" });
+    }
 
-//     const order = await Order.create({
-//       user: user._id,
-//       name: req.body.name || user.name,
-//       email: req.body.email || user.email,
-//       deliveryPhone: req.body.phone || user.phone,
-//       shippingCharge: req.body.shippingCharge || 0,
-//       totalPrice: req.body.totalPrice,
-//       paymentStatus: "Paid",
-//       cfOrderId,
-//       shippingAddress: {
-//         address: req.body.shippingAddress?.address || req.body.address,
-//         city: req.body.shippingAddress?.city || req.body.city,
-//         state: req.body.shippingAddress?.state || req.body.state,
-//         pincode: req.body.shippingAddress?.pincode || req.body.pincode,
-//       },
-//       shippingAddressPincode: req.body.shippingAddress?.pincode || req.body.pincode,
+    const user = await User.findById(req.user._id || req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-//       // 🚨 FIX: Extract clean Mongo ObjectId from productId
-//       products: (req.body.products || []).map((p) => {
-//         const cleanId = getCleanObjectId(p.productId || p.product);
-//         return {
-//           product: cleanId,
-//           productId: cleanId,
-//           title: p.title,
-//           price: p.price,
-//           image: p.image,
-//           quantity: p.quantity,
-//           size: p.size,
-//         };
-//       }),
-//     });
+    const order = await Order.create({
+      user: user._id,
+      name: req.body.name || user.name,
+      email: req.body.email || user.email,
+      deliveryPhone: req.body.phone || user.phone,
+      shippingCharge: req.body.shippingCharge || 0,
+      totalPrice: req.body.totalPrice,
+      paymentStatus: "Paid",
+      cfOrderId,
+      shippingAddress: {
+        address: req.body.shippingAddress?.address || req.body.address,
+        city: req.body.shippingAddress?.city || req.body.city,
+        state: req.body.shippingAddress?.state || req.body.state,
+        pincode: req.body.shippingAddress?.pincode || req.body.pincode,
+      },
+      shippingAddressPincode: req.body.shippingAddress?.pincode || req.body.pincode,
+      products: (req.body.products || []).map((p) => {
+        const cleanId = getCleanObjectId(p.productId || p.product);
+        return {
+          product: cleanId,
+          productId: cleanId,
+          title: p.title,
+          price: p.price,
+          image: p.image,
+          quantity: p.quantity,
+          size: p.size,
+        };
+      }),
+    });
 
-//     let shiprocketRes = null;
-//     try {
-//       shiprocketRes = await createShiprocketOrder(order);
-//       if (shiprocketRes) {
-//         order.shipmentId = shiprocketRes.shipment_id;
-//         order.courier = shiprocketRes.courier_name;
-//         order.trackingUrl = shiprocketRes.tracking_url;
-//         await order.save();
-//       }
-//     } catch (srErr) {
-//       console.log("❌ SHIPROCKET SYNC ERROR:", srErr.message);
-//     }
+    let shiprocketRes = null;
+    try {
+      shiprocketRes = await createShiprocketOrder(order);
+      if (shiprocketRes) {
+        order.shipmentId = shiprocketRes.shipment_id;
+        order.courier = shiprocketRes.courier_name;
+        order.trackingUrl = shiprocketRes.tracking_url;
+        await order.save();
+      }
+    } catch (srErr) {
+      console.log("❌ SHIPROCKET SYNC ERROR:", srErr.message);
+    }
 
-//     try {
-//       await resend.emails.send({
-//         from: SENDER_EMAIL,
-//         to: order.email,
-//         subject: `Order Confirmed - #${order._id.toString().substring(0, 8)}`,
-//         html: `
-//           <div style="background-color:#000;color:#fff;padding:30px;font-family:sans-serif;max-width:600px;border:1px solid #222;">
-//             <h1 style="color:#ff0000;font-size:24px;text-transform:uppercase;">Order Confirmed!</h1>
-//             <p>Hi ${order.name},</p>
-//             <p><strong>Order ID:</strong> ${order._id}</p>
-//             <p><strong>Total Paid:</strong> ₹${order.totalPrice}</p>
-//             ${order.trackingUrl ? `<p><a href="${order.trackingUrl}" style="color:#ff5555;">Track your shipment here</a></p>` : ""}
-//           </div>
-//         `,
-//       });
-//     } catch (mailErr) {
-//       console.log("❌ Email Error:", mailErr.message);
-//     }
+    try {
+      await resend.emails.send({
+        from: SENDER_EMAIL,
+        to: order.email,
+        subject: `Order Confirmed - #${order._id.toString().substring(0, 8)}`,
+        html: `
+          <div style="background-color:#000;color:#fff;padding:30px;font-family:sans-serif;max-width:600px;border:1px solid #222;">
+            <h1 style="color:#ff0000;font-size:24px;text-transform:uppercase;">Order Confirmed!</h1>
+            <p>Hi ${order.name},</p>
+            <p><strong>Order ID:</strong> ${order._id}</p>
+            <p><strong>Total Paid:</strong> ₹${order.totalPrice}</p>
+            ${order.trackingUrl ? `<p><a href="${order.trackingUrl}" style="color:#ff5555;">Track your shipment here</a></p>` : ""}
+          </div>
+        `,
+      });
+      console.log("✅ ORDER PLACED EMAIL SENT");
+    } catch (mailErr) {
+      console.log("❌ Email Error:", mailErr.message);
+    }
 
-//     return res.status(201).json({ success: true, order, shiprocket: shiprocketRes });
-//   } catch (error) {
-//     console.log("❌ VERIFY & CREATE ORDER ERROR:", error.response?.data || error.message);
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-
-
-
-
+    return res.status(201).json({ success: true, order, shiprocket: shiprocketRes });
+  } catch (error) {
+    console.log("❌ VERIFY & CREATE ORDER ERROR:", error.response?.data || error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 // ✅ 5. GET LOGGED-IN USER'S ORDERS
 exports.getMyOrders = async (req, res) => {
