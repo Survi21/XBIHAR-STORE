@@ -847,7 +847,7 @@ export default function CheckoutPage() {
       // Step C: Cashfree payment popup/redirect trigger karna
       if (typeof window !== "undefined" && (window as any).Cashfree) {
         const cashfree = new (window as any).Cashfree({
-          mode: "sandbox", // Live production mode
+          mode: "production", // Live production mode
         });
 
         cashfree.checkout({
